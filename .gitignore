@@ -1,0 +1,30 @@
+﻿# Dependencies
+node_modules/
+.pnpm-store/
+.yarn/
+
+# Build outputs
+dist/
+build/
+.cache/
+.vite/
+*.tsbuildinfo
+
+# Test outputs
+coverage/
+*.lcov
+
+# Environment & local runtime
+.env
+.env.*
+!.env.example
+*.log
+tmp/
+temp/
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+!.vscode/extensions.json
