@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1e24" />
+      <stop offset="100%" stop-color="#0a0a0c" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff9f0a" />
+      <stop offset="100%" stop-color="#ff7a00" />
+    </linearGradient>
+    <linearGradient id="blue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a84ff" />
+      <stop offset="100%" stop-color="#0066cc" />
+    </linearGradient>
+  </defs>
+
+  <!-- App Body Base -->
+  <rect width="512" height="512" rx="110" fill="url(#bg)" />
+
+  <!-- Screen Preview Area -->
+  <rect x="56" y="56" width="400" height="110" rx="24" fill="#2c2c2e" />
+  <rect x="300" y="86" width="130" height="24" rx="6" fill="#8e8e93" opacity="0.6" />
+  <rect x="180" y="122" width="250" height="30" rx="8" fill="#ffffff" />
+
+  <!-- Keypad Grid Preview -->
+  <!-- Row 1 -->
+  <circle cx="106" cy="225" r="36" fill="#3a3a3c" />
+  <circle cx="196" cy="225" r="36" fill="#3a3a3c" />
+  <circle cx="286" cy="225" r="36" fill="#3a3a3c" />
+  <circle cx="386" cy="225" r="36" fill="url(#accent)" />
+
+  <!-- Row 2 -->
+  <circle cx="106" cy="305" r="36" fill="#2c2c2e" />
+  <circle cx="196" cy="305" r="36" fill="#2c2c2e" />
+  <circle cx="286" cy="305" r="36" fill="#2c2c2e" />
+  <circle cx="386" cy="305" r="36" fill="url(#accent)" />
+
+  <!-- Row 3 -->
+  <circle cx="106" cy="385" r="36" fill="#2c2c2e" />
+  <circle cx="196" cy="385" r="36" fill="#2c2c2e" />
+  <circle cx="286" cy="385" r="36" fill="#2c2c2e" />
+  <circle cx="386" cy="385" r="36" fill="url(#accent)" />
+
+  <!-- Row 4 -->
+  <rect x="70" y="435" width="162" height="52" rx="26" fill="#2c2c2e" />
+  <circle cx="286" cy="461" r="26" fill="#2c2c2e" />
+  <circle cx="386" cy="461" r="36" fill="url(#blue)" />
+</svg>
