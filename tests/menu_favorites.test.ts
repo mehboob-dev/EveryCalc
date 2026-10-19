@@ -1,4 +1,4 @@
-﻿import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { getSettings, updateSettings } from '../src/core/settings.ts';
 
 const mockStorage: Record<string, string> = {};

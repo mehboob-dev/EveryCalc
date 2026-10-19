@@ -1,4 +1,4 @@
-﻿import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { calculateLoan, calculateSavings, calculateUnitPrice, calculateSIP, calculateFD } from '../src/modules/financial.ts';
 import { calculateHealth, calculateFuelCost, calculateFuelEfficiency, calculateDateDiff } from '../src/modules/health_fuel.ts';
 import { convertBases, calculateCycle } from '../src/modules/advanced.ts';

@@ -1,4 +1,4 @@
-﻿import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import {
   GLOBAL_CITIES,
   DEFAULT_ACTIVE_CITY_IDS,

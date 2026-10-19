@@ -1,4 +1,4 @@
-﻿import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { calculateDiscount } from '../src/modules/discount.ts';
 import { calculateTip } from '../src/modules/tip.ts';
 import { calculateTax } from '../src/modules/tax.ts';

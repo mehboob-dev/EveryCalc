@@ -1,4 +1,4 @@
-﻿import Decimal from 'decimal.js';
+import Decimal from 'decimal.js';
 import { CalculatorModule } from './types.ts';
 import { t } from '../core/i18n.ts';
 import { formatNumber } from '../core/format.ts';

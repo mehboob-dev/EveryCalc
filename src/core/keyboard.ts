@@ -1,4 +1,4 @@
-﻿export interface KeyboardHandlers {
+export interface KeyboardHandlers {
   onNumber: (num: string) => void;
   onOperation: (op: string) => void;
   onEquals: () => void;

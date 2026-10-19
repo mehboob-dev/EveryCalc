@@ -1,4 +1,4 @@
-﻿import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { getHistory, addHistory, clearHistory, deleteHistoryItem } from '../src/core/history.ts';
 
 // In-memory localStorage mock for node test environment

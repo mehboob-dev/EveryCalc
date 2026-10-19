@@ -1,0 +1,89 @@
+import { MonetizationConfig } from './types.ts';
+
+export const DEFAULT_MONETIZATION_CONFIG: MonetizationConfig = {
+  version: 1,
+  updatedAt: '2026-10-18T00:00:00Z',
+  adsense: {
+    enabled: false,
+    client: 'ca-pub-0000000000000000',
+    slot: '0000000000',
+    testMode: false,
+    placeholder: {
+      enabled: true,
+      badge: 'Sponsor Space',
+      icon: '📢',
+      title: 'Advertise on EveryCalc',
+      description: 'Promote your brand or service to active daily finance and calculator users.',
+      ctaText: 'Partner With Us',
+      url: 'https://earnkaro.com'
+    }
+  },
+  sponsors: [
+    {
+      enabled: false,
+      toolId: '*',
+      badge: 'Sponsored',
+      text: 'File your ITR & Taxes with expert CA support.',
+      ctaText: 'Consult Expert',
+      url: 'https://earnkaro.com'
+    }
+  ],
+  affiliates: {
+    IRA: {
+      id: 'aff-ira-angelone',
+      toolId: 'IRA',
+      title: 'Start this SIP with 0% Brokerage',
+      partnerName: 'Angel One / Upstox',
+      badgeText: 'Verified Partner',
+      description: 'Open a free Demat & Trading account in 5 minutes with zero account opening fees.',
+      ctaText: 'Open Free Demat A/C',
+      url: 'https://bitli.in/nh7R7Op',
+      icon: '📈'
+    },
+    LON: {
+      id: 'aff-lon-kotak',
+      toolId: 'LON',
+      enabled: true,
+      title: 'Apply for Kotak League Platinum Credit Card',
+      partnerName: 'Kotak Mahindra Bank',
+      badgeText: 'Instant Approval',
+      description: 'Get up to 8 free PVR movie tickets annually, reward points on every spend, and zero joining fee offer.',
+      ctaText: 'Apply for Kotak Card',
+      url: 'https://bitli.in/JvX8L60',
+      icon: '💳'
+    },
+    ITX: {
+      id: 'aff-itx-elss',
+      toolId: 'ITX',
+      title: 'Save up to ₹46,800 under Section 80C',
+      partnerName: 'Tax-Saving Mutual Funds (ELSS)',
+      badgeText: 'Tax Saver',
+      description: 'Invest in top-performing ELSS funds with lowest 3-year lock-in and high compounding returns.',
+      ctaText: 'Explore ELSS Funds',
+      url: 'https://earnkaro.com',
+      icon: '📑'
+    },
+    GLD: {
+      id: 'aff-gld-digital',
+      toolId: 'GLD',
+      title: 'Buy 24K 99.9% Pure Digital Gold from ₹10',
+      partnerName: 'Augmont / SafeGold Partner',
+      badgeText: '100% Insured',
+      description: 'Zero making charges, insured vault storage, and instant liquidation directly to your bank.',
+      ctaText: 'Start Digital Gold',
+      url: 'https://earnkaro.com',
+      icon: '🪙'
+    },
+    TAX: {
+      id: 'aff-tax-billing',
+      toolId: 'TAX',
+      title: 'Automate GST Invoicing & E-Way Bills',
+      partnerName: 'myBillBook / Vyapar',
+      badgeText: 'GST Ready',
+      description: 'Create professional GST bills, track inventory, and file GSTR reports in 1-click.',
+      ctaText: 'Try Free Invoicing',
+      url: 'https://earnkaro.com',
+      icon: '🧾'
+    }
+  }
+};

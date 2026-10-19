@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Shares text via Web Share API or falls back to WhatsApp Web/App and Clipboard.
  */
 export function shareText(text: string, title: string = 'EveryCalc'): void {

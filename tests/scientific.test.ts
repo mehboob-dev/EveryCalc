@@ -1,4 +1,4 @@
-﻿import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { evaluateExpression } from '../src/core/evaluator.ts';
 
 describe('Scientific Engine: Trigonometric Functions (DEG & RAD)', () => {

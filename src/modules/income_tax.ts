@@ -1,7 +1,8 @@
-﻿import Decimal from 'decimal.js';
+import Decimal from 'decimal.js';
 import { CalculatorModule } from './types.ts';
-import { formatNumber } from '../core/math.ts';
+import { formatNumber, numberToIndianWords } from '../core/math.ts';
 import { shareText } from '../core/share.ts';
+import { createAffiliateCardElement } from '../core/monetization/engine.ts';
 
 export interface IncomeTaxResult {
   grossIncome: string;
@@ -28,11 +29,17 @@ export function calculateIncomeTax(
   deductionHomeLoan: string | number = 0
 ): IncomeTaxResult {
   try {
-    const gross = new Decimal(grossIncome || 0);
-    const d80c = Decimal.min(new Decimal(deduction80C || 0), 150000); // 80C cap ₹1.5L
-    const d80d = Decimal.min(new Decimal(deduction80D || 0), 75000); // 80D health
-    const hra = new Decimal(deductionHRA || 0);
-    const homeLoan = Decimal.min(new Decimal(deductionHomeLoan || 0), 200000); // 24b cap ₹2L
+    const cleanGross = String(grossIncome || 0).replace(/,/g, '');
+    const clean80c = String(deduction80C || 0).replace(/,/g, '');
+    const clean80d = String(deduction80D || 0).replace(/,/g, '');
+    const cleanHra = String(deductionHRA || 0).replace(/,/g, '');
+    const cleanHomeLoan = String(deductionHomeLoan || 0).replace(/,/g, '');
+
+    const gross = new Decimal(cleanGross || 0);
+    const d80c = Decimal.min(new Decimal(clean80c || 0), 150000); // 80C cap ₹1.5L
+    const d80d = Decimal.min(new Decimal(clean80d || 0), 75000); // 80D health
+    const hra = new Decimal(cleanHra || 0);
+    const homeLoan = Decimal.min(new Decimal(cleanHomeLoan || 0), 200000); // 24b cap ₹2L
 
     if (gross.isZero()) {
       return {
@@ -190,24 +197,33 @@ export const IncomeTaxModule: CalculatorModule = {
                 <button class="btn-preset" data-ctc="2500000">₹25 L</button>
               </div>
               <div class="input-row" style="margin-top: 8px;">
-                <input type="number" id="itx-gross" class="form-input" value="1200000" placeholder="1200000" step="any" inputmode="decimal" />
+                <input type="text" id="itx-gross" class="form-input" value="12,00,000" placeholder="12,00,000" inputmode="numeric" />
               </div>
+              <div id="itx-gross-words" style="font-size: 12.5px; font-weight: 600; color: var(--accent-color, #ff9f0a); margin-top: 4px; padding-left: 2px;">Twelve Lakh Rupees</div>
 
               <div style="margin-top: 14px; font-weight: 700; font-size: 13.5px; color: var(--accent-color, #ff9f0a);">
                 Old Regime Deductions (Optional)
               </div>
 
               <label class="input-label" style="margin-top: 8px;">Section 80C (EPF, PPF, ELSS, Life Ins) [Max ₹1.5L]</label>
-              <input type="number" id="itx-80c" class="form-input" value="150000" placeholder="150000" step="any" inputmode="decimal" />
+              <div class="input-row">
+                <input type="text" id="itx-80c" class="form-input" value="1,50,000" placeholder="1,50,000" inputmode="numeric" />
+              </div>
 
-              <label class="input-label">Section 80D (Health Insurance Premium)</label>
-              <input type="number" id="itx-80d" class="form-input" value="25000" placeholder="25000" step="any" inputmode="decimal" />
+              <label class="input-label" style="margin-top: 12px;">Section 80D (Health Insurance Premium)</label>
+              <div class="input-row">
+                <input type="text" id="itx-80d" class="form-input" value="25,000" placeholder="25,000" inputmode="numeric" />
+              </div>
 
-              <label class="input-label">Annual HRA Exemption</label>
-              <input type="number" id="itx-hra" class="form-input" value="0" placeholder="0" step="any" inputmode="decimal" />
+              <label class="input-label" style="margin-top: 12px;">Annual HRA Exemption</label>
+              <div class="input-row">
+                <input type="text" id="itx-hra" class="form-input" value="0" placeholder="0" inputmode="numeric" />
+              </div>
 
-              <label class="input-label">Home Loan Interest (Section 24b) [Max ₹2L]</label>
-              <input type="number" id="itx-homeloan" class="form-input" value="0" placeholder="0" step="any" inputmode="decimal" />
+              <label class="input-label" style="margin-top: 12px;">Home Loan Interest (Section 24b) [Max ₹2L]</label>
+              <div class="input-row">
+                <input type="text" id="itx-homeloan" class="form-input" value="0" placeholder="0" inputmode="numeric" />
+              </div>
             </div>
           </div>
 
@@ -249,12 +265,16 @@ export const IncomeTaxModule: CalculatorModule = {
                 </button>
               </div>
             </div>
+
+            <!-- Contextual Tax Affiliate Slot -->
+            <div id="slot-affiliate-itx"></div>
           </div>
         </div>
       </div>
     `;
 
     const inpGross = container.querySelector('#itx-gross') as HTMLInputElement;
+    const inpGrossWords = container.querySelector('#itx-gross-words') as HTMLElement;
     const inp80c = container.querySelector('#itx-80c') as HTMLInputElement;
     const inp80d = container.querySelector('#itx-80d') as HTMLInputElement;
     const inpHra = container.querySelector('#itx-hra') as HTMLInputElement;
@@ -273,8 +293,13 @@ export const IncomeTaxModule: CalculatorModule = {
     let lastRes: IncomeTaxResult | null = null;
 
     function rec() {
+      const cleanGross = inpGross.value.replace(/,/g, '');
+      if (inpGrossWords) {
+        inpGrossWords.textContent = numberToIndianWords(cleanGross);
+      }
+
       const res = calculateIncomeTax(
-        inpGross.value,
+        cleanGross,
         inp80c.value,
         inp80d.value,
         inpHra.value,
@@ -282,21 +307,21 @@ export const IncomeTaxModule: CalculatorModule = {
       );
       lastRes = res;
 
-      resNewTax.textContent = `₹ ${formatNumber(res.newTotalTax)}`;
-      resOldTax.textContent = `₹ ${formatNumber(res.oldTotalTax)}`;
-      resNewTaxable.textContent = `₹ ${formatNumber(res.newTaxableIncome)}`;
-      resOldTaxable.textContent = `₹ ${formatNumber(res.oldTaxableIncome)}`;
+      resNewTax.textContent = `₹ ${formatNumber(res.newTotalTax, { section: 'finance' })}`;
+      resOldTax.textContent = `₹ ${formatNumber(res.oldTotalTax, { section: 'finance' })}`;
+      resNewTaxable.textContent = `₹ ${formatNumber(res.newTaxableIncome, { section: 'finance' })}`;
+      resOldTaxable.textContent = `₹ ${formatNumber(res.oldTaxableIncome, { section: 'finance' })}`;
 
       if (res.recommendedRegime === 'NEW') {
         recTitle.textContent = '🎉 New Tax Regime is Recommended!';
         recTitle.style.color = '#30d158';
-        recDesc.textContent = `You save ₹ ${formatNumber(res.savings)} with the New Regime.`;
+        recDesc.textContent = `You save ₹ ${formatNumber(res.savings, { section: 'finance' })} with the New Regime.`;
         banner.style.background = 'rgba(48, 209, 88, 0.15)';
         banner.style.borderColor = 'rgba(48, 209, 88, 0.4)';
       } else if (res.recommendedRegime === 'OLD') {
         recTitle.textContent = '🎉 Old Tax Regime is Recommended!';
         recTitle.style.color = '#30d158';
-        recDesc.textContent = `You save ₹ ${formatNumber(res.savings)} with Old Regime deductions.`;
+        recDesc.textContent = `You save ₹ ${formatNumber(res.savings, { section: 'finance' })} with Old Regime deductions.`;
         banner.style.background = 'rgba(48, 209, 88, 0.15)';
         banner.style.borderColor = 'rgba(48, 209, 88, 0.4)';
       } else {
@@ -309,15 +334,29 @@ export const IncomeTaxModule: CalculatorModule = {
     }
 
     function syncCtcPresets(val: string) {
+      const cleanVal = val.replace(/,/g, '');
       container.querySelectorAll('[data-ctc]').forEach((b) => {
-        b.classList.toggle('active', b.getAttribute('data-ctc') === val);
+        b.classList.toggle('active', b.getAttribute('data-ctc') === cleanVal);
       });
     }
 
+    function attachCommaBlur(input: HTMLInputElement) {
+      if (!input) return;
+      input.addEventListener('blur', () => {
+        const clean = input.value.replace(/,/g, '').trim();
+        if (clean && !isNaN(Number(clean))) {
+          input.value = formatNumber(clean, { section: 'finance' });
+        }
+      });
+    }
+
+    [inpGross, inp80c, inp80d, inpHra, inpHomeLoan].forEach((inp) => attachCommaBlur(inp));
+
     container.querySelectorAll('[data-ctc]').forEach((b) => {
       b.addEventListener('click', () => {
-        inpGross.value = b.getAttribute('data-ctc') || '1200000';
-        syncCtcPresets(inpGross.value);
+        const raw = b.getAttribute('data-ctc') || '1200000';
+        inpGross.value = formatNumber(raw, { section: 'finance' });
+        syncCtcPresets(raw);
         rec();
       });
     });
@@ -325,12 +364,12 @@ export const IncomeTaxModule: CalculatorModule = {
     btnShare.addEventListener('click', () => {
       if (!lastRes) return;
       const text = `📑 *Income Tax Comparison (FY 2024-25)*
-Gross CTC: ₹${formatNumber(lastRes.grossIncome)}
+Gross CTC: ₹${formatNumber(lastRes.grossIncome, { section: 'finance' })}
 ---
-✨ *New Regime Tax*: ₹${formatNumber(lastRes.newTotalTax)}
-🏛️ *Old Regime Tax*: ₹${formatNumber(lastRes.oldTotalTax)}
+✨ *New Regime Tax*: ₹${formatNumber(lastRes.newTotalTax, { section: 'finance' })}
+🏛️ *Old Regime Tax*: ₹${formatNumber(lastRes.oldTotalTax, { section: 'finance' })}
 ---
-💡 *Verdict*: ${lastRes.recommendedRegime === 'NEW' ? 'New Regime saves ₹' + formatNumber(lastRes.savings) : lastRes.recommendedRegime === 'OLD' ? 'Old Regime saves ₹' + formatNumber(lastRes.savings) : 'Both Equal (₹0 Tax)'}
+💡 *Verdict*: ${lastRes.recommendedRegime === 'NEW' ? 'New Regime saves ₹' + formatNumber(lastRes.savings, { section: 'finance' }) : lastRes.recommendedRegime === 'OLD' ? 'Old Regime saves ₹' + formatNumber(lastRes.savings, { section: 'finance' }) : 'Both Equal (₹0 Tax)'}
 
 Calculated via EveryCalc`;
       shareText(text, 'Income Tax Comparison');
@@ -341,6 +380,17 @@ Calculated via EveryCalc`;
       rec();
     });
     [inp80c, inp80d, inpHra, inpHomeLoan].forEach((inp) => inp?.addEventListener('input', rec));
+
+    // Initial format
+    if (inpGross.value) {
+      inpGross.value = formatNumber(inpGross.value.replace(/,/g, ''), { section: 'finance' });
+    }
+
+    const slotItx = container.querySelector('#slot-affiliate-itx');
+    if (slotItx) {
+      const card = createAffiliateCardElement('ITX');
+      if (card) slotItx.appendChild(card);
+    }
     rec();
   }
 };

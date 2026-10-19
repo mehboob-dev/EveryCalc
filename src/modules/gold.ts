@@ -1,7 +1,8 @@
-﻿import Decimal from 'decimal.js';
+import Decimal from 'decimal.js';
 import { CalculatorModule } from './types.ts';
-import { formatNumber } from '../core/math.ts';
+import { formatNumber, numberToIndianWords } from '../core/math.ts';
 import { shareText } from '../core/share.ts';
+import { createAffiliateCardElement } from '../core/monetization/engine.ts';
 
 export type GoldPurity =
   | '24K'
@@ -177,9 +178,13 @@ export function calculateGoldPrice(
   options: GoldCalculationOptions = {}
 ): GoldCalculationResult {
   try {
-    const rawWeight = new Decimal(weight || 0);
-    const rawRate = new Decimal(rate || 0);
-    const chargeVal = new Decimal(makingChargeVal || 0);
+    const cleanWeight = String(weight || 0).replace(/,/g, '');
+    const cleanRate = String(rate || 0).replace(/,/g, '');
+    const cleanChargeVal = String(makingChargeVal || 0).replace(/,/g, '');
+
+    const rawWeight = new Decimal(cleanWeight || 0);
+    const rawRate = new Decimal(cleanRate || 0);
+    const chargeVal = new Decimal(cleanChargeVal || 0);
     const rateUnit: RateUnit = options.rateUnit || 'PER_10G';
     const includeHallmark = options.includeHallmark ?? false;
 
@@ -333,7 +338,8 @@ export const GoldModule: CalculatorModule = {
 
                 <!-- Rate Presets -->
                 <div class="tip-preset-row" id="gld-rate-presets" style="margin-bottom: 8px;"></div>
-                <input type="number" id="gld-rate" class="form-input" value="78000" placeholder="78000" step="any" inputmode="decimal" />
+                <input type="text" id="gld-rate" class="form-input" value="78,000" placeholder="78,000" inputmode="numeric" />
+                <div id="gld-rate-words" class="input-words-hint"></div>
                 <div id="rate-explanation" style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;"></div>
               </div>
 
@@ -418,6 +424,9 @@ export const GoldModule: CalculatorModule = {
                 </button>
               </div>
             </div>
+
+            <!-- Contextual Gold / Bullion Affiliate Slot -->
+            <div id="slot-affiliate-gld"></div>
           </div>
         </div>
       </div>
@@ -430,6 +439,7 @@ export const GoldModule: CalculatorModule = {
 
     const inpWeight = container.querySelector('#gld-weight') as HTMLInputElement;
     const inpRate = container.querySelector('#gld-rate') as HTMLInputElement;
+    const inpRateWords = container.querySelector('#gld-rate-words') as HTMLElement;
     const inpMc = container.querySelector('#gld-mc') as HTMLInputElement;
     const btnToggleHallmark = container.querySelector('#btn-toggle-hallmark') as HTMLButtonElement;
 
@@ -492,13 +502,15 @@ export const GoldModule: CalculatorModule = {
 
     function updateRatePresets() {
       const presets = RATE_PRESETS[rateUnit];
+      const cleanRate = inpRate.value.replace(/,/g, '');
       ratePresetsContainer.innerHTML = presets
-        .map((val) => `<button class="btn-preset ${inpRate.value === val ? 'active' : ''}" data-gld-rate="${val}">₹${formatNumber(val)}</button>`)
+        .map((val) => `<button class="btn-preset ${cleanRate === val ? 'active' : ''}" data-gld-rate="${val}">₹${formatNumber(val, { section: 'finance' })}</button>`)
         .join('');
 
       ratePresetsContainer.querySelectorAll('[data-gld-rate]').forEach((b) => {
         b.addEventListener('click', () => {
-          inpRate.value = b.getAttribute('data-gld-rate') || presets[2];
+          const raw = b.getAttribute('data-gld-rate') || presets[2];
+          inpRate.value = formatNumber(raw, { section: 'finance' });
           updateRatePresets();
           rec();
         });
@@ -518,11 +530,16 @@ export const GoldModule: CalculatorModule = {
     }
 
     function rec() {
+      const cleanRate = inpRate.value.replace(/,/g, '');
+      if (inpRateWords) {
+        inpRateWords.textContent = numberToIndianWords(cleanRate);
+      }
+
       const res = calculateGoldPrice(
         inpWeight.value,
         unit,
         currentPurity.id,
-        inpRate.value,
+        cleanRate,
         inpMc.value,
         chargeType,
         {
@@ -533,24 +550,24 @@ export const GoldModule: CalculatorModule = {
       lastRes = res;
 
       resKarat.textContent = `${res.purityKarat} • ${res.purityPct}`;
-      resRateG.textContent = `₹ ${formatNumber(res.goldRatePerGram)} / g`;
+      resRateG.textContent = `₹ ${formatNumber(res.goldRatePerGram, { section: 'finance' })} / g`;
       resWeight.textContent = `${res.weightInGrams} g`;
-      resGoldVal.textContent = `₹ ${formatNumber(res.goldValue)}`;
-      resMc.textContent = `₹ ${formatNumber(res.makingChargeAmount)}`;
-      resSubtotal.textContent = `₹ ${formatNumber(res.subtotal)}`;
-      resGst.textContent = `₹ ${formatNumber(res.gstAmount)}`;
-      resTotal.textContent = `₹ ${formatNumber(res.totalPayable)}`;
+      resGoldVal.textContent = `₹ ${formatNumber(res.goldValue, { section: 'finance' })}`;
+      resMc.textContent = `₹ ${formatNumber(res.makingChargeAmount, { section: 'finance' })}`;
+      resSubtotal.textContent = `₹ ${formatNumber(res.subtotal, { section: 'finance' })}`;
+      resGst.textContent = `₹ ${formatNumber(res.gstAmount, { section: 'finance' })}`;
+      resTotal.textContent = `₹ ${formatNumber(res.totalPayable, { section: 'finance' })}`;
 
       // Hallmark visibility
       if (includeHallmark) {
         rowHallmark.style.display = 'flex';
-        resHallmark.textContent = `₹ ${res.hallmarkAmount}`;
+        resHallmark.textContent = `₹ ${formatNumber(res.hallmarkAmount, { section: 'finance' })}`;
       } else {
         rowHallmark.style.display = 'none';
       }
 
       // Live formula text
-      formulaText.textContent = `${res.weightInGrams}g @ ₹${formatNumber(res.goldRatePerGram)}/g = ₹${formatNumber(res.goldValue)} + Making ₹${formatNumber(res.makingChargeAmount)} + 3% GST (₹${formatNumber(res.gstAmount)}) = ₹${formatNumber(res.totalPayable)}`;
+      formulaText.textContent = `${res.weightInGrams}g @ ₹${formatNumber(res.goldRatePerGram, { section: 'finance' })}/g = ₹${formatNumber(res.goldValue, { section: 'finance' })} + Making ₹${formatNumber(res.makingChargeAmount, { section: 'finance' })} + 3% GST (₹${formatNumber(res.gstAmount, { section: 'finance' })}) = ₹${formatNumber(res.totalPayable, { section: 'finance' })}`;
     }
 
     // Select dropdown listener
@@ -591,7 +608,7 @@ export const GoldModule: CalculatorModule = {
       rateUnit = 'PER_G';
       btnRateG.classList.add('active');
       btnRate10g.classList.remove('active');
-      inpRate.value = '7800';
+      inpRate.value = formatNumber('7800', { section: 'finance' });
       syncRateUI();
       rec();
     });
@@ -600,7 +617,7 @@ export const GoldModule: CalculatorModule = {
       rateUnit = 'PER_10G';
       btnRate10g.classList.add('active');
       btnRateG.classList.remove('active');
-      inpRate.value = '78000';
+      inpRate.value = formatNumber('78000', { section: 'finance' });
       syncRateUI();
       rec();
     });
@@ -653,19 +670,26 @@ export const GoldModule: CalculatorModule = {
       rec();
     });
 
+    inpRate.addEventListener('blur', () => {
+      const clean = inpRate.value.replace(/,/g, '').trim();
+      if (clean && !isNaN(Number(clean))) {
+        inpRate.value = formatNumber(clean, { section: 'finance' });
+      }
+    });
+
     // WhatsApp Share button
     btnShare.addEventListener('click', () => {
       if (!lastRes) return;
       const text = `🪙 *Gold Jewelry Price Quotation*
 Purity: ${lastRes.purityKarat} (${lastRes.purityPct} Pure)
 Weight: ${inpWeight.value} ${unit.toUpperCase()} (${lastRes.weightInGrams}g)
-Effective Rate: ₹${formatNumber(lastRes.goldRatePerGram)}/g
+Effective Rate: ₹${formatNumber(lastRes.goldRatePerGram, { section: 'finance' })}/g
 ---
-Gold Value: ₹${formatNumber(lastRes.goldValue)}
-Making Charges: ₹${formatNumber(lastRes.makingChargeAmount)}
-${includeHallmark ? `BIS Hallmark Fee: ₹${lastRes.hallmarkAmount}\n` : ''}Subtotal: ₹${formatNumber(lastRes.subtotal)}
-Jewelry GST (3%): ₹${formatNumber(lastRes.gstAmount)}
-*Total Invoice Price: ₹${formatNumber(lastRes.totalPayable)}*
+Gold Value: ₹${formatNumber(lastRes.goldValue, { section: 'finance' })}
+Making Charges: ₹${formatNumber(lastRes.makingChargeAmount, { section: 'finance' })}
+${includeHallmark ? `BIS Hallmark Fee: ₹${formatNumber(lastRes.hallmarkAmount, { section: 'finance' })}\n` : ''}Subtotal: ₹${formatNumber(lastRes.subtotal, { section: 'finance' })}
+Jewelry GST (3%): ₹${formatNumber(lastRes.gstAmount, { section: 'finance' })}
+*Total Invoice Price: ₹${formatNumber(lastRes.totalPayable, { section: 'finance' })}*
 
 Calculated via EveryCalc`;
       shareText(text, 'Gold Jewelry Estimate');
@@ -674,8 +698,9 @@ Calculated via EveryCalc`;
     // Inputs
     inpWeight.addEventListener('input', rec);
     inpRate.addEventListener('input', () => {
+      const clean = inpRate.value.replace(/,/g, '');
       ratePresetsContainer.querySelectorAll('[data-gld-rate]').forEach((b) => {
-        b.classList.toggle('active', b.getAttribute('data-gld-rate') === inpRate.value);
+        b.classList.toggle('active', b.getAttribute('data-gld-rate') === clean);
       });
       rec();
     });
@@ -689,6 +714,12 @@ Calculated via EveryCalc`;
     // Initial setup
     renderPills();
     syncRateUI();
+
+    const slotGld = container.querySelector('#slot-affiliate-gld');
+    if (slotGld) {
+      const card = createAffiliateCardElement('GLD');
+      if (card) slotGld.appendChild(card);
+    }
     rec();
   }
 };

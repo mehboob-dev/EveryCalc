@@ -1,4 +1,4 @@
-﻿import Decimal from 'decimal.js';
+import Decimal from 'decimal.js';
 import { EXTENDED_CONSTANTS } from './constants.ts';
 
 // Configure Decimal precision

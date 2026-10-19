@@ -1,4 +1,4 @@
-﻿import { CalculatorModule } from './types.ts';
+import { CalculatorModule } from './types.ts';
 import { shareText } from '../core/share.ts';
 
 export type DDayCategory = 'Anniversary' | 'Birthday' | 'Holiday' | 'Goal' | 'Custom';

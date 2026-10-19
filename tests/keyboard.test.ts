@@ -1,4 +1,4 @@
-﻿import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { handleKeyboardEvent, KeyboardHandlers } from '../src/core/keyboard.ts';
 
 describe('Desktop Keyboard Handler', () => {

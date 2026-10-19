@@ -1,4 +1,4 @@
-﻿export interface SectionPrecision {
+export interface SectionPrecision {
   general?: number | 'auto';
   finance?: number | 'auto';
   unit?: number | 'auto';
@@ -9,6 +9,7 @@ export interface UserSettings {
   hapticFeedback: boolean;
   soundFeedback: boolean;
   defaultCalculatorId: string;
+  showAdsAndOffers: boolean;
   language?: string;
   numberFormat?: 'auto' | 'international' | 'european' | 'indian';
   masterPrecision?: number | 'auto';
@@ -24,6 +25,7 @@ const DEFAULT_SETTINGS: UserSettings = {
   hapticFeedback: true,
   soundFeedback: true,
   defaultCalculatorId: 'NOR',
+  showAdsAndOffers: true,
   numberFormat: 'auto',
   masterPrecision: 'auto',
   sectionPrecision: {
@@ -44,6 +46,7 @@ export function getSettings(): UserSettings {
       hapticFeedback: typeof parsed.hapticFeedback === 'boolean' ? parsed.hapticFeedback : true,
       soundFeedback: typeof parsed.soundFeedback === 'boolean' ? parsed.soundFeedback : true,
       defaultCalculatorId: typeof parsed.defaultCalculatorId === 'string' ? parsed.defaultCalculatorId : 'NOR',
+      showAdsAndOffers: typeof parsed.showAdsAndOffers === 'boolean' ? parsed.showAdsAndOffers : true,
       language: typeof parsed.language === 'string' ? parsed.language : undefined,
       numberFormat: ['auto', 'international', 'european', 'indian'].includes(parsed.numberFormat) ? parsed.numberFormat : 'auto',
       masterPrecision: parsed.masterPrecision !== undefined ? parsed.masterPrecision : 'auto',

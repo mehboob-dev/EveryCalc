@@ -1,4 +1,4 @@
-﻿export interface CalculatorModule {
+export interface CalculatorModule {
   id: string;
   name: string;
   icon: string;

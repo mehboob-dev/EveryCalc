@@ -1,4 +1,4 @@
-﻿let audioCtx: AudioContext | null = null;
+let audioCtx: AudioContext | null = null;
 
 /**
  * Synthesizes a subtle, tactile mechanical key click using the Web Audio API.

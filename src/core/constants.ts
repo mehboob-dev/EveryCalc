@@ -1,4 +1,4 @@
-﻿export interface ConstantDef {
+export interface ConstantDef {
   symbol: string;
   name: string;
   value: string;

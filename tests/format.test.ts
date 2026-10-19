@@ -1,4 +1,4 @@
-﻿import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { formatNumber, resolveGrouping, resolvePrecision } from '../src/core/format.ts';
 import { updateSettings } from '../src/core/settings.ts';
 import { setLanguage } from '../src/core/i18n.ts';

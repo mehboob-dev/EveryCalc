@@ -1,4 +1,4 @@
-﻿import Decimal from 'decimal.js';
+import Decimal from 'decimal.js';
 import { CalculatorModule } from './types.ts';
 import { formatNumber } from '../core/math.ts';
 import { t } from '../core/i18n.ts';
@@ -17,10 +17,15 @@ export function calculateDiscount(
   taxPercent: string | number = 0
 ): DiscountCalculation {
   try {
-    const p = new Decimal(originalPrice || 0);
-    const d1 = new Decimal(discountPercent || 0);
-    const d2 = new Decimal(additionalDiscount || 0);
-    const t = new Decimal(taxPercent || 0);
+    const cleanPrice = String(originalPrice || 0).replace(/,/g, '');
+    const cleanDiscount = String(discountPercent || 0).replace(/,/g, '');
+    const cleanAdd = String(additionalDiscount || 0).replace(/,/g, '');
+    const cleanTax = String(taxPercent || 0).replace(/,/g, '');
+
+    const p = new Decimal(cleanPrice || 0);
+    const d1 = new Decimal(cleanDiscount || 0);
+    const d2 = new Decimal(cleanAdd || 0);
+    const t = new Decimal(cleanTax || 0);
 
     const priceAfterD1 = p.times(new Decimal(1).minus(d1.dividedBy(100)));
     const priceAfterD2 = priceAfterD1.times(new Decimal(1).minus(d2.dividedBy(100)));
@@ -56,7 +61,7 @@ export const DiscountModule: CalculatorModule = {
             <div class="input-card">
               <label class="input-label">${t('originalPrice')}</label>
               <div class="input-row">
-                <input type="number" id="dct-price" class="form-input" placeholder="0.00" step="any" inputmode="decimal" />
+                <input type="text" id="dct-price" class="form-input" placeholder="0.00" inputmode="numeric" />
               </div>
 
               <label class="input-label">${t('discount')}</label>
@@ -112,10 +117,17 @@ export const DiscountModule: CalculatorModule = {
         addDiscountInput.value,
         taxInput.value
       );
-      if (resFinal) resFinal.textContent = formatNumber(res.finalPrice);
-      if (resSavings) resSavings.textContent = formatNumber(res.totalSavings);
-      if (resTax) resTax.textContent = formatNumber(res.taxAmount);
+      if (resFinal) resFinal.textContent = formatNumber(res.finalPrice, { section: 'finance' });
+      if (resSavings) resSavings.textContent = formatNumber(res.totalSavings, { section: 'finance' });
+      if (resTax) resTax.textContent = formatNumber(res.taxAmount, { section: 'finance' });
     }
+
+    priceInput.addEventListener('blur', () => {
+      const clean = priceInput.value.replace(/,/g, '').trim();
+      if (clean && !isNaN(Number(clean))) {
+        priceInput.value = formatNumber(clean, { section: 'finance' });
+      }
+    });
 
     [priceInput, discountInput, addDiscountInput, taxInput].forEach((inp) => {
       inp?.addEventListener('input', recalculate);

@@ -1,4 +1,4 @@
-﻿export interface HistoryItem {
+export interface HistoryItem {
   id: string;
   expression: string;
   result: string;

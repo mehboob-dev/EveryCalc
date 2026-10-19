@@ -1,4 +1,4 @@
-﻿import Decimal from 'decimal.js';
+import Decimal from 'decimal.js';
 import { getLanguage } from './i18n.ts';
 import { getSettings } from './settings.ts';
 
