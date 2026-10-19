@@ -1,6 +1,6 @@
 import Decimal from 'decimal.js';
 import { CalculatorModule } from './types.ts';
-import { formatNumber, formatLabelNumber } from '../core/math.ts';
+import { formatNumber, formatLabelNumber, attachCommaFormatter } from '../core/math.ts';
 import { shareText } from '../core/share.ts';
 
 export type TaxMode = 'EXCLUDE' | 'INCLUDE';
@@ -21,7 +21,7 @@ export function calculateTax(
   isInterState: boolean = false
 ): TaxCalculation {
   try {
-    const val = new Decimal(amount || 0);
+    const val = new Decimal(amount !== undefined && amount !== null ? amount.toString().replace(/,/g, '') : 0);
     const rate = new Decimal(taxRatePercent || 0);
 
     let net: Decimal;
@@ -85,7 +85,7 @@ export const TaxModule: CalculatorModule = {
             <div class="input-card">
               <label id="tax-amount-label" class="input-label">Net Amount (₹ Before GST)</label>
               <div class="input-row">
-                <input type="number" id="tax-amount" class="form-input" placeholder="0.00" step="any" inputmode="decimal" />
+                <input type="text" id="tax-amount" class="form-input" placeholder="0.00" inputmode="decimal" />
               </div>
 
               <label class="input-label">GST Slab Rate (%)</label>
@@ -259,7 +259,7 @@ Calculated via EveryCalc`;
       });
     });
 
-    amountInput.addEventListener('input', recalculate);
+    attachCommaFormatter(amountInput, () => recalculate());
     rateInput.addEventListener('input', () => {
       syncRatePresets(rateInput.value);
       recalculate();

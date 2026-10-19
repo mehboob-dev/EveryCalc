@@ -1,5 +1,5 @@
 import { CalculatorModule } from './types.ts';
-import { formatLabelNumber } from '../core/math.ts';
+import { formatLabelNumber, attachCommaFormatter, formatInputValue } from '../core/math.ts';
 
 // ==========================================
 // 1. HEXADECIMAL & PROGRAMMER CONVERTER (HEX)
@@ -404,7 +404,7 @@ export const CurrencyModule: CalculatorModule = {
             <div class="input-card">
               <label class="input-label" id="lbl-cur-from">From</label>
               <div class="input-row">
-                <input type="number" id="cur-amount-from" class="form-input" value="100" placeholder="0" step="any" inputmode="decimal" />
+                <input type="text" id="cur-amount-from" class="form-input" value="100" placeholder="0" inputmode="decimal" />
                 <select id="cur-select-from" class="form-select">
                   ${CURRENCIES.map((c) => `<option value="${c.code}" ${c.code === 'USD' ? 'selected' : ''}>${c.flag} ${c.code} - ${c.name}</option>`).join('')}
                 </select>
@@ -420,7 +420,7 @@ export const CurrencyModule: CalculatorModule = {
             <div class="input-card">
               <label class="input-label" id="lbl-cur-to">To (Converted)</label>
               <div class="input-row">
-                <input type="number" id="cur-amount-to" class="form-input" placeholder="0" step="any" inputmode="decimal" />
+                <input type="text" id="cur-amount-to" class="form-input" placeholder="0" inputmode="decimal" />
                 <select id="cur-select-to" class="form-select">
                   ${CURRENCIES.map((c) => `<option value="${c.code}" ${c.code === 'INR' ? 'selected' : ''}>${c.flag} ${c.code} - ${c.name}</option>`).join('')}
                 </select>
@@ -457,7 +457,7 @@ export const CurrencyModule: CalculatorModule = {
 
     function renderAllCurrencies() {
       if (!allCurGrid) return;
-      const baseFromAmt = parseFloat(inpFrom.value) || 0;
+      const baseFromAmt = parseFloat(inpFrom.value.replace(/,/g, '')) || 0;
       const rFrom = CURRENCY_RATES[selFrom.value] || 1;
       const usdValue = baseFromAmt / rFrom;
 
@@ -533,22 +533,22 @@ export const CurrencyModule: CalculatorModule = {
         const rTo = CURRENCY_RATES[selTo.value] || 1;
 
         if (source === 'from') {
-          const val = inpFrom.value.trim();
+          const val = inpFrom.value.replace(/,/g, '').trim();
           if (val === '' || val === '-') {
             inpTo.value = '';
           } else {
             const num = parseFloat(val) || 0;
             const converted = (num / rFrom) * rTo;
-            inpTo.value = converted.toFixed(2).replace(/\.?0+$/, '');
+            inpTo.value = formatInputValue(converted.toFixed(2).replace(/\.?0+$/, ''));
           }
         } else {
-          const val = inpTo.value.trim();
+          const val = inpTo.value.replace(/,/g, '').trim();
           if (val === '' || val === '-') {
             inpFrom.value = '';
           } else {
             const num = parseFloat(val) || 0;
             const converted = (num / rTo) * rFrom;
-            inpFrom.value = converted.toFixed(2).replace(/\.?0+$/, '');
+            inpFrom.value = formatInputValue(converted.toFixed(2).replace(/\.?0+$/, ''));
           }
         }
         updateRateBanner();
@@ -571,11 +571,13 @@ export const CurrencyModule: CalculatorModule = {
       recalcFromSource('from');
     });
 
-    inpFrom.addEventListener('input', () => recalcFromSource('from'));
-    inpTo.addEventListener('input', () => recalcFromSource('to'));
+    attachCommaFormatter(inpFrom, () => recalcFromSource('from'));
+    attachCommaFormatter(inpTo, () => recalcFromSource('to'));
 
     selFrom.addEventListener('change', () => recalcFromSource('from'));
     selTo.addEventListener('change', () => recalcFromSource('from'));
+
+    inpFrom.value = formatInputValue(inpFrom.value || '100');
 
     recalcFromSource('from');
   }

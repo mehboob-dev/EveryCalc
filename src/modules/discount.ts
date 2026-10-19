@@ -1,6 +1,6 @@
 import Decimal from 'decimal.js';
 import { CalculatorModule } from './types.ts';
-import { formatNumber } from '../core/math.ts';
+import { formatNumber, attachCommaFormatter } from '../core/math.ts';
 import { t } from '../core/i18n.ts';
 
 export interface DiscountCalculation {
@@ -17,7 +17,7 @@ export function calculateDiscount(
   taxPercent: string | number = 0
 ): DiscountCalculation {
   try {
-    const p = new Decimal(originalPrice || 0);
+    const p = new Decimal(originalPrice !== undefined && originalPrice !== null ? originalPrice.toString().replace(/,/g, '') : 0);
     const d1 = new Decimal(discountPercent || 0);
     const d2 = new Decimal(additionalDiscount || 0);
     const t = new Decimal(taxPercent || 0);
@@ -56,7 +56,7 @@ export const DiscountModule: CalculatorModule = {
             <div class="input-card">
               <label class="input-label">${t('originalPrice')}</label>
               <div class="input-row">
-                <input type="number" id="dct-price" class="form-input" placeholder="0.00" step="any" inputmode="decimal" />
+                <input type="text" id="dct-price" class="form-input" placeholder="0.00" inputmode="decimal" />
               </div>
 
               <label class="input-label">${t('discount')}</label>
@@ -117,7 +117,8 @@ export const DiscountModule: CalculatorModule = {
       if (resTax) resTax.textContent = formatNumber(res.taxAmount);
     }
 
-    [priceInput, discountInput, addDiscountInput, taxInput].forEach((inp) => {
+    attachCommaFormatter(priceInput, () => recalculate());
+    [discountInput, addDiscountInput, taxInput].forEach((inp) => {
       inp?.addEventListener('input', recalculate);
     });
   }

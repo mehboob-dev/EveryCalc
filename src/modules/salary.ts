@@ -1,6 +1,6 @@
 import Decimal from 'decimal.js';
 import { CalculatorModule } from './types.ts';
-import { formatNumber, formatLabelNumber } from '../core/math.ts';
+import { formatNumber, formatLabelNumber, attachCommaFormatter, formatInputValue } from '../core/math.ts';
 import { calculateIncomeTax } from './income_tax.ts';
 import { shareText } from '../core/share.ts';
 
@@ -24,7 +24,8 @@ export function calculateInHandSalary(
   ptMonthly: string | number = 200
 ): SalaryBreakdownResult {
   try {
-    const ctc = new Decimal(annualCTC || 0);
+    const rawCtc = annualCTC !== undefined && annualCTC !== null ? annualCTC.toString().replace(/,/g, '') : '0';
+    const ctc = new Decimal(rawCtc || 0);
     const bPct = new Decimal(basicPct || 40).dividedBy(100);
     const pt = new Decimal(ptMonthly || 200);
 
@@ -108,7 +109,7 @@ export const SalaryModule: CalculatorModule = {
                 <button class="btn-preset" data-sal="2500000">₹25 L</button>
               </div>
               <div class="input-row" style="margin-top: 8px;">
-                <input type="number" id="sal-ctc" class="form-input" value="1500000" placeholder="1500000" step="any" inputmode="decimal" />
+                <input type="text" id="sal-ctc" class="form-input" value="15,00,000" placeholder="15,00,000" inputmode="decimal" />
               </div>
 
               <label class="input-label">Basic Salary (% of CTC)</label>
@@ -217,15 +218,17 @@ export const SalaryModule: CalculatorModule = {
     }
 
     function syncSalPresets(attr: string, val: string) {
+      const cleanVal = val.replace(/,/g, '');
       container.querySelectorAll(`[${attr}]`).forEach((b) => {
-        b.classList.toggle('active', b.getAttribute(attr) === val);
+        b.classList.toggle('active', b.getAttribute(attr) === cleanVal);
       });
     }
 
     container.querySelectorAll('[data-sal]').forEach((b) => {
       b.addEventListener('click', () => {
-        inpCtc.value = b.getAttribute('data-sal') || '1500000';
-        syncSalPresets('data-sal', inpCtc.value);
+        const raw = b.getAttribute('data-sal') || '1500000';
+        inpCtc.value = formatInputValue(raw);
+        syncSalPresets('data-sal', raw);
         rec();
       });
     });
@@ -257,8 +260,8 @@ Calculated via EveryCalc`;
       shareText(text, 'In-Hand Salary Estimate');
     });
 
-    inpCtc.addEventListener('input', () => {
-      syncSalPresets('data-sal', inpCtc.value);
+    attachCommaFormatter(inpCtc, (raw) => {
+      syncSalPresets('data-sal', raw);
       rec();
     });
     inpBasicPct.addEventListener('input', () => {
@@ -266,6 +269,8 @@ Calculated via EveryCalc`;
       rec();
     });
     inpPt.addEventListener('input', rec);
+
+    inpCtc.value = formatInputValue(inpCtc.value || '1500000');
     rec();
   }
 };

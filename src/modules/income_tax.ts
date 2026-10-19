@@ -1,6 +1,6 @@
 import Decimal from 'decimal.js';
 import { CalculatorModule } from './types.ts';
-import { formatNumber, formatLabelNumber } from '../core/math.ts';
+import { formatNumber, formatLabelNumber, attachCommaFormatter, formatInputValue } from '../core/math.ts';
 import { shareText } from '../core/share.ts';
 
 export interface IncomeTaxResult {
@@ -28,11 +28,11 @@ export function calculateIncomeTax(
   deductionHomeLoan: string | number = 0
 ): IncomeTaxResult {
   try {
-    const gross = new Decimal(grossIncome || 0);
-    const d80c = Decimal.min(new Decimal(deduction80C || 0), 150000); // 80C cap ₹1.5L
-    const d80d = Decimal.min(new Decimal(deduction80D || 0), 75000); // 80D health
-    const hra = new Decimal(deductionHRA || 0);
-    const homeLoan = Decimal.min(new Decimal(deductionHomeLoan || 0), 200000); // 24b cap ₹2L
+    const gross = new Decimal(grossIncome !== undefined && grossIncome !== null ? grossIncome.toString().replace(/,/g, '') : 0);
+    const d80c = Decimal.min(new Decimal(deduction80C !== undefined && deduction80C !== null ? deduction80C.toString().replace(/,/g, '') : 0), 150000); // 80C cap ₹1.5L
+    const d80d = Decimal.min(new Decimal(deduction80D !== undefined && deduction80D !== null ? deduction80D.toString().replace(/,/g, '') : 0), 75000); // 80D health
+    const hra = new Decimal(deductionHRA !== undefined && deductionHRA !== null ? deductionHRA.toString().replace(/,/g, '') : 0);
+    const homeLoan = Decimal.min(new Decimal(deductionHomeLoan !== undefined && deductionHomeLoan !== null ? deductionHomeLoan.toString().replace(/,/g, '') : 0), 200000); // 24b cap ₹2L
 
     if (gross.isZero()) {
       return {
@@ -190,7 +190,7 @@ export const IncomeTaxModule: CalculatorModule = {
                 <button class="btn-preset" data-ctc="2500000">₹25 L</button>
               </div>
               <div class="input-row" style="margin-top: 8px;">
-                <input type="number" id="itx-gross" class="form-input" value="1200000" placeholder="1200000" step="any" inputmode="decimal" />
+                <input type="text" id="itx-gross" class="form-input" value="12,00,000" placeholder="12,00,000" inputmode="decimal" />
               </div>
 
               <div style="margin-top: 14px; font-weight: 700; font-size: 13.5px; color: var(--accent-color, #ff9f0a);">
@@ -198,16 +198,16 @@ export const IncomeTaxModule: CalculatorModule = {
               </div>
 
               <label class="input-label" style="margin-top: 8px;">Section 80C (EPF, PPF, ELSS, Life Ins) [Max ₹1.5L]</label>
-              <input type="number" id="itx-80c" class="form-input" value="150000" placeholder="150000" step="any" inputmode="decimal" />
+              <input type="text" id="itx-80c" class="form-input" value="1,50,000" placeholder="1,50,000" inputmode="decimal" />
 
               <label class="input-label">Section 80D (Health Insurance Premium)</label>
-              <input type="number" id="itx-80d" class="form-input" value="25000" placeholder="25000" step="any" inputmode="decimal" />
+              <input type="text" id="itx-80d" class="form-input" value="25,000" placeholder="25,000" inputmode="decimal" />
 
               <label class="input-label">Annual HRA Exemption</label>
-              <input type="number" id="itx-hra" class="form-input" value="0" placeholder="0" step="any" inputmode="decimal" />
+              <input type="text" id="itx-hra" class="form-input" value="0" placeholder="0" inputmode="decimal" />
 
               <label class="input-label">Home Loan Interest (Section 24b) [Max ₹2L]</label>
-              <input type="number" id="itx-homeloan" class="form-input" value="0" placeholder="0" step="any" inputmode="decimal" />
+              <input type="text" id="itx-homeloan" class="form-input" value="0" placeholder="0" inputmode="decimal" />
             </div>
           </div>
 
@@ -309,15 +309,17 @@ export const IncomeTaxModule: CalculatorModule = {
     }
 
     function syncCtcPresets(val: string) {
+      const cleanVal = val.replace(/,/g, '');
       container.querySelectorAll('[data-ctc]').forEach((b) => {
-        b.classList.toggle('active', b.getAttribute('data-ctc') === val);
+        b.classList.toggle('active', b.getAttribute('data-ctc') === cleanVal);
       });
     }
 
     container.querySelectorAll('[data-ctc]').forEach((b) => {
       b.addEventListener('click', () => {
-        inpGross.value = b.getAttribute('data-ctc') || '1200000';
-        syncCtcPresets(inpGross.value);
+        const raw = b.getAttribute('data-ctc') || '1200000';
+        inpGross.value = formatInputValue(raw);
+        syncCtcPresets(raw);
         rec();
       });
     });
@@ -336,11 +338,22 @@ Calculated via EveryCalc`;
       shareText(text, 'Income Tax Comparison');
     });
 
-    inpGross.addEventListener('input', () => {
-      syncCtcPresets(inpGross.value);
+    attachCommaFormatter(inpGross, (raw) => {
+      syncCtcPresets(raw);
       rec();
     });
-    [inp80c, inp80d, inpHra, inpHomeLoan].forEach((inp) => inp?.addEventListener('input', rec));
+    [inp80c, inp80d, inpHra, inpHomeLoan].forEach((inp) => {
+      if (inp) {
+        attachCommaFormatter(inp, () => rec());
+      }
+    });
+
+    inpGross.value = formatInputValue(inpGross.value || '1200000');
+    [inp80c, inp80d, inpHra, inpHomeLoan].forEach((inp) => {
+      if (inp && inp.value && inp.value !== '0') {
+        inp.value = formatInputValue(inp.value);
+      }
+    });
     rec();
   }
 };

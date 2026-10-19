@@ -1,6 +1,6 @@
 import Decimal from 'decimal.js';
 import { CalculatorModule } from './types.ts';
-import { formatNumber } from '../core/math.ts';
+import { formatNumber, attachCommaFormatter } from '../core/math.ts';
 
 export interface TipCalculation {
   tipAmount: string;
@@ -15,7 +15,7 @@ export function calculateTip(
   peopleCount: string | number = 1
 ): TipCalculation {
   try {
-    const bill = new Decimal(billAmount || 0);
+    const bill = new Decimal(billAmount !== undefined && billAmount !== null ? billAmount.toString().replace(/,/g, '') : 0);
     const tipPct = new Decimal(tipPercent || 0);
     let people = new Decimal(peopleCount || 1);
     if (people.lessThanOrEqualTo(0)) people = new Decimal(1);
@@ -53,7 +53,7 @@ export const TipModule: CalculatorModule = {
             <div class="input-card">
               <label class="input-label">Bill Amount</label>
               <div class="input-row">
-                <input type="number" id="tip-bill" class="form-input" placeholder="0.00" step="any" inputmode="decimal" />
+                <input type="text" id="tip-bill" class="form-input" placeholder="0.00" inputmode="decimal" />
               </div>
 
               <label class="input-label">Tip Percentage (%)</label>
@@ -150,7 +150,7 @@ export const TipModule: CalculatorModule = {
       recalculate();
     });
 
-    billInput.addEventListener('input', recalculate);
+    attachCommaFormatter(billInput, () => recalculate());
     percentInput.addEventListener('input', () => {
       syncTipPresets(percentInput.value);
       recalculate();

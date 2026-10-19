@@ -126,9 +126,9 @@ export function getIndianWords(val: string): string {
   return '';
 }
 
-import { formatNumber as coreFormatNumber, formatLabelNumber as coreFormatLabelNumber, formatExpressionGrouping, FormatOptions } from './format.ts';
+import { formatNumber as coreFormatNumber, formatLabelNumber as coreFormatLabelNumber, formatExpressionGrouping, attachCommaFormatter, formatInputValue, FormatOptions } from './format.ts';
 
-export { coreFormatNumber as formatNumber, coreFormatLabelNumber as formatLabelNumber, formatExpressionGrouping };
+export { coreFormatNumber as formatNumber, coreFormatLabelNumber as formatLabelNumber, formatExpressionGrouping, attachCommaFormatter, formatInputValue };
 export type { FormatOptions };
 
 /**

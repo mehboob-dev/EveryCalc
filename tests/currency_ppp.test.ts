@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { calculatePpp, PPP_COUNTRIES } from '../src/modules/ppp.ts';
 import { CURRENCIES, getPinnedCurrencies, togglePinnedCurrency } from '../src/modules/advanced.ts';
+import { formatInputValue } from '../src/core/math.ts';
 
 describe('Currency Converter (Bidirectional & All Currencies List)', () => {
   it('contains comprehensive global currency definitions with codes, flags, and rates', () => {
@@ -46,6 +47,20 @@ describe('Purchasing Power Parity (PPP) Calculator', () => {
     // India is cheaper than US in cost of living
     expect(res.costOfLivingDiffPct).toBeLessThan(-50);
     expect(res.purchasingPowerMultiplier).toBeGreaterThan(2.5);
+  });
+
+  it('correctly handles comma-formatted string inputs according to grouping system', () => {
+    // US $100,000 with commas
+    const res = calculatePpp('1,00,000', 'USA', 'IND');
+    expect(res.equivalentSalary).toBe(2450000);
+
+    // India ₹24,50,000 with commas
+    const resReverse = calculatePpp('24,50,000', 'IND', 'USA');
+    expect(resReverse.equivalentSalary).toBe(100000);
+
+    // formatInputValue produces standardized grouping commas
+    expect(formatInputValue('100000')).toBe('1,00,000');
+    expect(formatInputValue('2500000')).toBe('25,00,000');
   });
 
   it('correctly calculates reverse conversion from India to USA', () => {

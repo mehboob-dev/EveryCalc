@@ -1,6 +1,6 @@
 import Decimal from 'decimal.js';
 import { CalculatorModule } from './types.ts';
-import { formatLabelNumber } from '../core/math.ts';
+import { formatLabelNumber, attachCommaFormatter, formatInputValue } from '../core/math.ts';
 import { shareText } from '../core/share.ts';
 
 export interface PppCountry {
@@ -294,7 +294,10 @@ export function calculatePpp(
   const source = PPP_COUNTRIES.find((c) => c.id === sourceCountryId) || PPP_COUNTRIES[0];
   const target = PPP_COUNTRIES.find((c) => c.id === targetCountryId) || PPP_COUNTRIES[1];
 
-  let rawSalary = typeof sourceSalaryStr === 'number' ? sourceSalaryStr : parseFloat(sourceSalaryStr.toString());
+  let rawSalary =
+    typeof sourceSalaryStr === 'number'
+      ? sourceSalaryStr
+      : parseFloat(sourceSalaryStr.toString().replace(/,/g, ''));
   if (isNaN(rawSalary) || rawSalary < 0) rawSalary = 0;
 
   // Conversion formula: Target Salary = Source Salary * (Target PPP Factor / Source PPP Factor)
@@ -365,7 +368,7 @@ export const PppModule: CalculatorModule = {
 
               <label class="input-label" id="lbl-source-salary" style="margin-top: 6px;">Annual Salary / Income (${PPP_COUNTRIES[0].symbol})</label>
               <div>
-                <input type="number" id="ppp-input-salary" class="form-input ppp-salary-input" value="100000" placeholder="100000" step="any" inputmode="decimal" />
+                <input type="text" id="ppp-input-salary" class="form-input ppp-salary-input" value="1,00,000" placeholder="1,00,000" inputmode="decimal" />
               </div>
 
               <!-- Source Quick Preset Buttons -->
@@ -482,10 +485,11 @@ export const PppModule: CalculatorModule = {
       heroFlag.textContent = tgt.flag;
       heroTargetName.textContent = `${tgt.name} Equivalent Salary`;
 
+      const currentNum = parseFloat(inpSalary.value.replace(/,/g, ''));
       presetsBox.innerHTML = src.presets
         .map(
           (p) => `
-          <button class="btn-preset ${parseFloat(inpSalary.value) === p.value ? 'active' : ''}" data-salary="${p.value}">
+          <button class="btn-preset ${currentNum === p.value ? 'active' : ''}" data-salary="${p.value}">
             ${p.label}
           </button>
         `
@@ -494,7 +498,8 @@ export const PppModule: CalculatorModule = {
 
       presetsBox.querySelectorAll('[data-salary]').forEach((b) => {
         b.addEventListener('click', () => {
-          inpSalary.value = b.getAttribute('data-salary') || src.defaultSalary.toString();
+          const raw = b.getAttribute('data-salary') || src.defaultSalary.toString();
+          inpSalary.value = formatInputValue(raw);
           updatePresets();
           recalculate();
         });
@@ -601,7 +606,7 @@ export const PppModule: CalculatorModule = {
       sourceId = selSource.value;
       const src = PPP_COUNTRIES.find((c) => c.id === sourceId);
       if (src) {
-        inpSalary.value = src.defaultSalary.toString();
+        inpSalary.value = formatInputValue(src.defaultSalary.toString());
       }
       updatePresets();
       recalculate();
@@ -613,7 +618,8 @@ export const PppModule: CalculatorModule = {
       recalculate();
     });
 
-    inpSalary.addEventListener('input', () => {
+    attachCommaFormatter(inpSalary, () => {
+      updatePresets();
       recalculate();
     });
 
@@ -627,7 +633,7 @@ export const PppModule: CalculatorModule = {
       selTarget.value = targetId;
 
       if (lastResult) {
-        inpSalary.value = lastResult.equivalentSalary.toString();
+        inpSalary.value = formatInputValue(lastResult.equivalentSalary.toString());
       }
 
       updatePresets();
@@ -654,6 +660,7 @@ https://mehboob-dev.github.io/EveryCalc/`;
       shareText(text, 'PPP Living Standard Comparison');
     });
 
+    inpSalary.value = formatInputValue(inpSalary.value || 100000);
     updatePresets();
     recalculate();
   }

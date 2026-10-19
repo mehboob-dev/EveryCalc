@@ -100,6 +100,70 @@ export function formatExpressionGrouping(
 }
 
 /**
+ * Formats a numeric string or number into a comma-grouped input value.
+ */
+export function formatInputValue(val: string | number | Decimal): string {
+  if (val === undefined || val === null) return '';
+  const clean = val.toString().replace(/,/g, '').trim();
+  if (clean === '' || clean === '-') return clean;
+  return formatExpressionGrouping(clean);
+}
+
+/**
+ * Attaches real-time comma formatting (e.g., Indian Lakhs & Crores: 1,00,000)
+ * to a text input with inputmode="decimal", preserving cursor position.
+ */
+export function attachCommaFormatter(
+  input: HTMLInputElement,
+  onChange?: (rawNumericValue: string) => void
+): void {
+  function formatCurrent() {
+    const originalValue = input.value;
+    const cursorPos = input.selectionStart ?? originalValue.length;
+
+    // Count how many non-comma characters were before the cursor
+    const rawBeforeCursor = originalValue.slice(0, cursorPos).replace(/,/g, '');
+
+    // Get pure raw value without commas
+    const rawValue = originalValue.replace(/,/g, '').trim();
+    if (rawValue === '' || rawValue === '-') {
+      if (onChange) onChange(rawValue);
+      return;
+    }
+
+    // Format with commas according to active grouping (Indian Lakhs/Crores by default)
+    const formatted = formatExpressionGrouping(rawValue);
+    input.value = formatted;
+
+    // Restore cursor position based on raw character count
+    let newCursorPos = 0;
+    let countedRaw = 0;
+    for (let i = 0; i < formatted.length; i++) {
+      if (formatted[i] !== ',') {
+        countedRaw++;
+      }
+      if (countedRaw === rawBeforeCursor.length) {
+        newCursorPos = i + 1;
+        break;
+      }
+    }
+    if (countedRaw < rawBeforeCursor.length) {
+      newCursorPos = formatted.length;
+    }
+
+    try {
+      input.setSelectionRange(newCursorPos, newCursorPos);
+    } catch {}
+
+    if (onChange) {
+      onChange(rawValue);
+    }
+  }
+
+  input.addEventListener('input', formatCurrent);
+}
+
+/**
  * Universal, cross-cutting number formatting function.
  */
 export function formatNumber(

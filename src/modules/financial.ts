@@ -1,6 +1,6 @@
 import Decimal from 'decimal.js';
 import { CalculatorModule } from './types.ts';
-import { formatNumber, formatLabelNumber } from '../core/math.ts';
+import { formatNumber, formatLabelNumber, attachCommaFormatter, formatInputValue } from '../core/math.ts';
 import { shareText } from '../core/share.ts';
 
 // ==========================================
@@ -52,7 +52,7 @@ export function generateAmortizationSchedule(
   method: LoanMethod = 'AMORTIZATION'
 ): AmortizationSchedule {
   try {
-    const p = new Decimal(principal || 0);
+    const p = new Decimal(principal !== undefined && principal !== null ? principal.toString().replace(/,/g, '') : 0);
     const r = new Decimal(annualRatePct || 0);
     const months = new Decimal(termMonths || 1);
 
@@ -213,7 +213,7 @@ export function calculateLoan(
   frequency: PaymentFrequency = 'MONTHLY'
 ): LoanResult {
   try {
-    const p = new Decimal(principal || 0);
+    const p = new Decimal(principal !== undefined && principal !== null ? principal.toString().replace(/,/g, '') : 0);
     const r = new Decimal(annualRatePct || 0);
     const months = new Decimal(termMonths || 1);
 
@@ -314,7 +314,7 @@ export const LoanModule: CalculatorModule = {
                 <button class="btn-preset" data-amount="10000000">₹1 Cr</button>
               </div>
               <div class="input-row" style="margin-top: 8px;">
-                <input type="number" id="loan-p" class="form-input" value="5000000" placeholder="5000000" step="any" inputmode="decimal" />
+                <input type="text" id="loan-p" class="form-input" value="50,00,000" placeholder="50,00,000" inputmode="decimal" />
               </div>
 
               <label class="input-label">Annual Interest Rate (%)</label>
@@ -605,16 +605,18 @@ Calculated via EveryCalc`;
     });
 
     function syncLoanPresets(attr: string, value: string) {
+      const clean = value.replace(/,/g, '');
       container.querySelectorAll(`[${attr}]`).forEach((el) => {
-        el.classList.toggle('active', el.getAttribute(attr) === value);
+        el.classList.toggle('active', el.getAttribute(attr) === clean);
       });
     }
 
     // Wire presets
     container.querySelectorAll('[data-amount]').forEach((b) => {
       b.addEventListener('click', () => {
-        inpP.value = b.getAttribute('data-amount') || '5000000';
-        syncLoanPresets('data-amount', inpP.value);
+        const raw = b.getAttribute('data-amount') || '5000000';
+        inpP.value = formatInputValue(raw);
+        syncLoanPresets('data-amount', raw);
         rec();
       });
     });
@@ -635,8 +637,8 @@ Calculated via EveryCalc`;
       });
     });
 
-    inpP.addEventListener('input', () => {
-      syncLoanPresets('data-amount', inpP.value);
+    attachCommaFormatter(inpP, (raw) => {
+      syncLoanPresets('data-amount', raw);
       rec();
     });
 
@@ -650,6 +652,7 @@ Calculated via EveryCalc`;
       rec();
     });
 
+    inpP.value = formatInputValue(inpP.value || '5000000');
     rec();
   }
 };
@@ -682,7 +685,7 @@ export function calculateSIP(
   tenureYears: string | number
 ): SIPResult {
   try {
-    const p = new Decimal(monthlyInvestment || 0);
+    const p = new Decimal(monthlyInvestment !== undefined && monthlyInvestment !== null ? monthlyInvestment.toString().replace(/,/g, '') : 0);
     const r = new Decimal(annualRatePct || 0);
     const y = new Decimal(tenureYears || 0);
     const n = y.times(12);
@@ -725,7 +728,7 @@ export function calculateFD(
   isSeniorCitizen: boolean = false
 ): FDResult {
   try {
-    const p = new Decimal(principal || 0);
+    const p = new Decimal(principal !== undefined && principal !== null ? principal.toString().replace(/,/g, '') : 0);
     let r = new Decimal(annualRatePct || 0);
     if (isSeniorCitizen) {
       r = r.plus(0.5); // Standard Indian senior citizen benefit (+0.5%)
@@ -760,8 +763,8 @@ export function calculateSavings(
   taxRatePct: string | number = 15.4
 ): SavingsResult {
   try {
-    const init = new Decimal(initialDeposit || 0);
-    const monthly = new Decimal(monthlyDeposit || 0);
+    const init = new Decimal(initialDeposit !== undefined && initialDeposit !== null ? initialDeposit.toString().replace(/,/g, '') : 0);
+    const monthly = new Decimal(monthlyDeposit !== undefined && monthlyDeposit !== null ? monthlyDeposit.toString().replace(/,/g, '') : 0);
     const r = new Decimal(annualRatePct || 0);
     const n = parseInt(String(termMonths || 0), 10);
     const taxRate = new Decimal(taxRatePct || 0);
@@ -820,7 +823,7 @@ export const SavingsModule: CalculatorModule = {
                 <button class="btn-preset" data-sip-amt="25000">₹25,000</button>
               </div>
               <div class="input-row" style="margin-top: 8px;">
-                <input type="number" id="sip-monthly" class="form-input" value="5000" placeholder="5000" step="any" inputmode="decimal" />
+                <input type="text" id="sip-monthly" class="form-input" value="5,000" placeholder="5,000" inputmode="decimal" />
               </div>
 
               <label class="input-label">Expected Return Rate (% p.a.)</label>
@@ -854,7 +857,7 @@ export const SavingsModule: CalculatorModule = {
                 <button class="btn-preset" data-fd-amt="500000">₹5 Lakh</button>
               </div>
               <div class="input-row" style="margin-top: 8px;">
-                <input type="number" id="fd-amt" class="form-input" value="100000" placeholder="100000" step="any" inputmode="decimal" />
+                <input type="text" id="fd-amt" class="form-input" value="1,00,000" placeholder="1,00,000" inputmode="decimal" />
               </div>
 
               <label class="input-label">Annual Interest Rate (% p.a.)</label>
@@ -883,10 +886,10 @@ export const SavingsModule: CalculatorModule = {
             <!-- RD / General Savings View -->
             <div id="view-sav" class="input-card" style="display: none;">
               <label class="input-label">Initial Deposit (₹)</label>
-              <input type="number" id="sav-init" class="form-input" value="0" placeholder="0" step="any" inputmode="decimal" />
+              <input type="text" id="sav-init" class="form-input" value="0" placeholder="0" inputmode="decimal" />
 
               <label class="input-label">Monthly Deposit (₹)</label>
-              <input type="number" id="sav-monthly" class="form-input" value="2000" placeholder="2000" step="any" inputmode="decimal" />
+              <input type="text" id="sav-monthly" class="form-input" value="2,000" placeholder="2,000" inputmode="decimal" />
 
               <label class="input-label">Annual Interest Rate (%)</label>
               <input type="number" id="sav-rate" class="form-input" value="6.5" placeholder="6.5" step="any" inputmode="decimal" />
@@ -1029,8 +1032,9 @@ export const SavingsModule: CalculatorModule = {
     const resPre = container.querySelector('#sav-res-pre-tax') as HTMLElement;
 
     function syncPresets(attr: string, value: string) {
+      const clean = value.replace(/,/g, '');
       container.querySelectorAll(`[${attr}]`).forEach((el) => {
-        el.classList.toggle('active', el.getAttribute(attr) === value);
+        el.classList.toggle('active', el.getAttribute(attr) === clean);
       });
     }
 
@@ -1165,8 +1169,9 @@ export const SavingsModule: CalculatorModule = {
     // Preset wireups for SIP with bi-directional sync
     container.querySelectorAll('[data-sip-amt]').forEach((b) => {
       b.addEventListener('click', () => {
-        sipMonthly.value = b.getAttribute('data-sip-amt') || '5000';
-        syncPresets('data-sip-amt', sipMonthly.value);
+        const raw = b.getAttribute('data-sip-amt') || '5000';
+        sipMonthly.value = formatInputValue(raw);
+        syncPresets('data-sip-amt', raw);
         rec();
       });
     });
@@ -1190,8 +1195,9 @@ export const SavingsModule: CalculatorModule = {
     // Preset wireups for FD with bi-directional sync
     container.querySelectorAll('[data-fd-amt]').forEach((b) => {
       b.addEventListener('click', () => {
-        fdAmt.value = b.getAttribute('data-fd-amt') || '100000';
-        syncPresets('data-fd-amt', fdAmt.value);
+        const raw = b.getAttribute('data-fd-amt') || '100000';
+        fdAmt.value = formatInputValue(raw);
+        syncPresets('data-fd-amt', raw);
         rec();
       });
     });
@@ -1204,9 +1210,9 @@ export const SavingsModule: CalculatorModule = {
       });
     });
 
-    // Bi-directional input sync listeners
-    sipMonthly.addEventListener('input', () => {
-      syncPresets('data-sip-amt', sipMonthly.value);
+    // Bi-directional input sync listeners with comma grouping
+    attachCommaFormatter(sipMonthly, (raw) => {
+      syncPresets('data-sip-amt', raw);
       rec();
     });
 
@@ -1220,8 +1226,8 @@ export const SavingsModule: CalculatorModule = {
       rec();
     });
 
-    fdAmt.addEventListener('input', () => {
-      syncPresets('data-fd-amt', fdAmt.value);
+    attachCommaFormatter(fdAmt, (raw) => {
+      syncPresets('data-fd-amt', raw);
       rec();
     });
 
@@ -1230,9 +1236,16 @@ export const SavingsModule: CalculatorModule = {
       rec();
     });
 
-    [fdYears, inpInit, inpMonthly, inpRate, inpTerm, inpTax].forEach(
+    attachCommaFormatter(inpInit, () => rec());
+    attachCommaFormatter(inpMonthly, () => rec());
+
+    [fdYears, inpRate, inpTerm, inpTax].forEach(
       (inp) => inp?.addEventListener('input', rec)
     );
+
+    sipMonthly.value = formatInputValue(sipMonthly.value || '5000');
+    fdAmt.value = formatInputValue(fdAmt.value || '100000');
+    if (inpMonthly.value) inpMonthly.value = formatInputValue(inpMonthly.value);
 
     btnShareSavings?.addEventListener('click', () => {
       let text = '';

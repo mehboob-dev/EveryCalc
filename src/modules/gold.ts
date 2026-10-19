@@ -1,6 +1,6 @@
 import Decimal from 'decimal.js';
 import { CalculatorModule } from './types.ts';
-import { formatNumber, formatLabelNumber } from '../core/math.ts';
+import { formatNumber, formatLabelNumber, attachCommaFormatter, formatInputValue } from '../core/math.ts';
 import { shareText } from '../core/share.ts';
 
 export type GoldPurity =
@@ -177,9 +177,9 @@ export function calculateGoldPrice(
   options: GoldCalculationOptions = {}
 ): GoldCalculationResult {
   try {
-    const rawWeight = new Decimal(weight || 0);
-    const rawRate = new Decimal(rate || 0);
-    const chargeVal = new Decimal(makingChargeVal || 0);
+    const rawWeight = new Decimal(weight !== undefined && weight !== null ? weight.toString().replace(/,/g, '') : 0);
+    const rawRate = new Decimal(rate !== undefined && rate !== null ? rate.toString().replace(/,/g, '') : 0);
+    const chargeVal = new Decimal(makingChargeVal !== undefined && makingChargeVal !== null ? makingChargeVal.toString().replace(/,/g, '') : 0);
     const rateUnit: RateUnit = options.rateUnit || 'PER_10G';
     const includeHallmark = options.includeHallmark ?? false;
 
@@ -333,7 +333,7 @@ export const GoldModule: CalculatorModule = {
 
                 <!-- Rate Presets -->
                 <div class="tip-preset-row" id="gld-rate-presets" style="margin-bottom: 8px;"></div>
-                <input type="number" id="gld-rate" class="form-input" value="78000" placeholder="78000" step="any" inputmode="decimal" />
+                <input type="text" id="gld-rate" class="form-input" value="78,000" placeholder="78,000" inputmode="decimal" />
                 <div id="rate-explanation" style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;"></div>
               </div>
 
@@ -492,13 +492,15 @@ export const GoldModule: CalculatorModule = {
 
     function updateRatePresets() {
       const presets = RATE_PRESETS[rateUnit];
+      const cleanVal = inpRate.value.replace(/,/g, '');
       ratePresetsContainer.innerHTML = presets
-        .map((val) => `<button class="btn-preset ${inpRate.value === val ? 'active' : ''}" data-gld-rate="${val}">₹${formatLabelNumber(val)}</button>`)
+        .map((val) => `<button class="btn-preset ${cleanVal === val ? 'active' : ''}" data-gld-rate="${val}">₹${formatLabelNumber(val)}</button>`)
         .join('');
 
       ratePresetsContainer.querySelectorAll('[data-gld-rate]').forEach((b) => {
         b.addEventListener('click', () => {
-          inpRate.value = b.getAttribute('data-gld-rate') || presets[2];
+          const raw = b.getAttribute('data-gld-rate') || presets[2];
+          inpRate.value = formatInputValue(raw);
           updateRatePresets();
           rec();
         });
@@ -591,7 +593,7 @@ export const GoldModule: CalculatorModule = {
       rateUnit = 'PER_G';
       btnRateG.classList.add('active');
       btnRate10g.classList.remove('active');
-      inpRate.value = '7800';
+      inpRate.value = formatInputValue('7800');
       syncRateUI();
       rec();
     });
@@ -600,7 +602,7 @@ export const GoldModule: CalculatorModule = {
       rateUnit = 'PER_10G';
       btnRate10g.classList.add('active');
       btnRateG.classList.remove('active');
-      inpRate.value = '78000';
+      inpRate.value = formatInputValue('78000');
       syncRateUI();
       rec();
     });
@@ -673,9 +675,9 @@ Calculated via EveryCalc`;
 
     // Inputs
     inpWeight.addEventListener('input', rec);
-    inpRate.addEventListener('input', () => {
+    attachCommaFormatter(inpRate, (rawVal) => {
       ratePresetsContainer.querySelectorAll('[data-gld-rate]').forEach((b) => {
-        b.classList.toggle('active', b.getAttribute('data-gld-rate') === inpRate.value);
+        b.classList.toggle('active', b.getAttribute('data-gld-rate') === rawVal);
       });
       rec();
     });
@@ -687,6 +689,7 @@ Calculated via EveryCalc`;
     });
 
     // Initial setup
+    inpRate.value = formatInputValue(inpRate.value || '78000');
     renderPills();
     syncRateUI();
     rec();
