@@ -210,12 +210,12 @@ function updateDisplay() {
       displayMain.innerHTML = html;
     }
 
-    // Dynamic font scaling: auto-shrink from 42px to 30px, then 24px floor before wrapping
+    // Dynamic font scaling: maintain large font for standard expressions, compact for > 16, floor for > 28
     const rawLen = (displayMain.textContent || '').length;
     displayMain.classList.remove('len-compact', 'len-floor');
-    if (rawLen > 20) {
+    if (rawLen > 28) {
       displayMain.classList.add('len-floor');
-    } else if (rawLen > 11) {
+    } else if (rawLen > 16) {
       displayMain.classList.add('len-compact');
     }
 
@@ -1212,58 +1212,76 @@ function setupApp() {
 
   renderCalculatorLists();
 
-  // Keypad bindings
-  document.querySelectorAll('[data-num]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const num = btn.getAttribute('data-num');
-      if (num) handleNumber(num);
+  // Helper to bind buttons with zero-latency pointerdown for robust multi-touch support
+  function bindKeypadButton(btn: Element | null, action: () => void): void {
+    if (!btn) return;
+    const htmlBtn = btn as HTMLElement;
+    let lastPointerTime = 0;
+
+    htmlBtn.addEventListener('pointerdown', (e: PointerEvent) => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      lastPointerTime = Date.now();
+      e.preventDefault();
+      htmlBtn.classList.add('keyboard-active');
+      action();
     });
+
+    const clearActive = () => {
+      htmlBtn.classList.remove('keyboard-active');
+    };
+    htmlBtn.addEventListener('pointerup', clearActive);
+    htmlBtn.addEventListener('pointercancel', clearActive);
+    htmlBtn.addEventListener('pointerleave', clearActive);
+
+    htmlBtn.addEventListener('click', (e: MouseEvent) => {
+      e.preventDefault();
+      if (Date.now() - lastPointerTime < 400) {
+        return;
+      }
+      action();
+    });
+  }
+
+  // Keypad bindings (pointerdown-driven for lag-free multi-touch and rapid two-thumb typing)
+  document.querySelectorAll('[data-num]').forEach((btn) => {
+    const num = btn.getAttribute('data-num');
+    if (num) bindKeypadButton(btn, () => handleNumber(num));
   });
 
   document.querySelectorAll('[data-op]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const op = btn.getAttribute('data-op');
-      if (op) handleOperation(op);
-    });
+    const op = btn.getAttribute('data-op');
+    if (op) bindKeypadButton(btn, () => handleOperation(op));
   });
 
   document.querySelectorAll('[data-paren]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const paren = btn.getAttribute('data-paren');
-      if (paren) handleParenthesis(paren);
-    });
+    const paren = btn.getAttribute('data-paren');
+    if (paren) bindKeypadButton(btn, () => handleParenthesis(paren));
   });
 
   document.querySelectorAll('[data-fn]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const fn = btn.getAttribute('data-fn');
-      if (fn) handleFunction(fn);
-    });
+    const fn = btn.getAttribute('data-fn');
+    if (fn) bindKeypadButton(btn, () => handleFunction(fn));
   });
 
   document.querySelectorAll('[data-const]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const c = btn.getAttribute('data-const');
-      if (c) handleConstant(c);
-    });
+    const c = btn.getAttribute('data-const');
+    if (c) bindKeypadButton(btn, () => handleConstant(c));
   });
 
   document.querySelectorAll('[data-postfix]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const p = btn.getAttribute('data-postfix');
-      if (p) handlePostfix(p);
-    });
+    const p = btn.getAttribute('data-postfix');
+    if (p) bindKeypadButton(btn, () => handlePostfix(p));
   });
 
   document.querySelectorAll('[data-percent]').forEach((btn) => {
-    btn.addEventListener('click', handlePercent);
+    bindKeypadButton(btn, handlePercent);
   });
 
-  document.getElementById('btn-sqrt')?.addEventListener('click', handleSquareRoot);
-  document.getElementById('btn-clear')?.addEventListener('click', handleClear);
-  document.getElementById('btn-equals')?.addEventListener('click', handleEquals);
-  document.getElementById('btn-backspace')?.addEventListener('click', handleBackspace);
-  document.getElementById('btn-sign')?.addEventListener('click', handleToggleSign);
+  bindKeypadButton(document.getElementById('btn-sqrt'), handleSquareRoot);
+  bindKeypadButton(document.getElementById('btn-clear'), handleClear);
+  bindKeypadButton(document.getElementById('btn-equals'), handleEquals);
+  bindKeypadButton(document.getElementById('btn-backspace'), handleBackspace);
+  bindKeypadButton(document.getElementById('btn-sign'), handleToggleSign);
 
   // Tap-to-position cursor on display box without unwanted clipboard copy
   const calcDisplayBox = document.getElementById('calc-display-box');

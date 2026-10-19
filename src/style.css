@@ -238,7 +238,7 @@ body {
 }
 
 .display-main {
-  font-size: clamp(28px, 8vw, 42px);
+  font-size: clamp(34px, 9.5vw, 46px);
   font-weight: 600;
   line-height: 1.25;
   letter-spacing: -0.5px;
@@ -259,12 +259,12 @@ body {
 }
 
 .calc-display .display-main.len-compact {
-  font-size: clamp(22px, 6vw, 30px);
+  font-size: clamp(26px, 7vw, 34px);
   line-height: 1.28;
 }
 
 .calc-display .display-main.len-floor {
-  font-size: clamp(18px, 4.8vw, 24px);
+  font-size: clamp(22px, 5.8vw, 26px);
   line-height: 1.32;
 }
 
@@ -341,6 +341,10 @@ body {
   white-space: nowrap;
   box-shadow: var(--clay-btn-drop), var(--clay-btn-light), var(--clay-btn-dark);
   transition: transform 0.1s ease, box-shadow 0.1s ease;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .btn-sub.btn-cursor-step {
@@ -392,6 +396,10 @@ body {
   text-overflow: ellipsis;
   box-shadow: var(--clay-btn-drop), var(--clay-btn-light), var(--clay-btn-dark);
   transition: transform 0.1s ease, box-shadow 0.1s ease;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .sci-btn:active {
@@ -425,6 +433,10 @@ body {
   cursor: pointer;
   box-shadow: var(--clay-btn-drop), var(--clay-btn-light), var(--clay-btn-dark);
   transition: transform 0.1s ease, box-shadow 0.1s ease;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .calc-btn:active {
