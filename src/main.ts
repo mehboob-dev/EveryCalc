@@ -1844,11 +1844,33 @@ function setupApp() {
   syncRemoteMonetizationConfig().catch(() => {});
 }
 
-// Register Service Worker for offline PWA functionality
+// Register Service Worker for offline PWA functionality & auto-update
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch((err) => {
-      console.warn('PWA service worker registration failed:', err);
+    navigator.serviceWorker
+      .register('./sw.js')
+      .then((registration) => {
+        // Actively check for service worker updates on app load
+        registration.update().catch(() => {});
+
+        // Re-check when app regains focus/visibility
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') {
+            registration.update().catch(() => {});
+          }
+        });
+      })
+      .catch((err) => {
+        console.warn('PWA service worker registration failed:', err);
+      });
+
+    // Auto-reload once the new service worker activates and claims the client
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
     });
   });
 }
