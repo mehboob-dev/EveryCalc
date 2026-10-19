@@ -206,9 +206,9 @@ export function formatTenureMonths(months: number | string): string {
   return `${yrLabel} (${m} Months)`;
 }
 
-import { formatNumber as coreFormatNumber, FormatOptions } from './format.ts';
+import { formatNumber as coreFormatNumber, formatExpressionGrouping, FormatOptions } from './format.ts';
 
-export { coreFormatNumber as formatNumber };
+export { coreFormatNumber as formatNumber, formatExpressionGrouping };
 export type { FormatOptions };
 
 /**

@@ -15,25 +15,24 @@ export interface FormatOptions {
 
 /**
  * Determines the concrete grouping system based on user settings and language.
+ * Defaults to Indian Lakhs & Crores grouping so input and results match everywhere.
  */
 export function resolveGrouping(groupingSetting?: GroupingMode, langCode?: string): 'international' | 'european' | 'indian' {
-  const chosen = groupingSetting || getSettings().numberFormat || 'auto';
+  const chosen = groupingSetting || getSettings().numberFormat || 'indian';
   if (chosen === 'international' || chosen === 'european' || chosen === 'indian') {
     return chosen;
   }
 
   const lang = (langCode || getLanguage() || 'en').toLowerCase();
-  if (lang === 'hi' || lang.startsWith('hi-')) {
-    return 'indian';
-  }
   if (lang === 'de' || lang === 'fr' || lang === 'es' || lang.startsWith('pt')) {
     return 'european';
   }
-  return 'international';
+  // Default to Indian numbering system everywhere
+  return 'indian';
 }
 
 /**
- * Resolves the effective precision based on section-specific overrides or global settings.
+ * Resolves the effective precision based on single global precision or overrides.
  */
 export function resolvePrecision(section?: SectionType, explicitPrecision?: number | 'auto'): number | 'auto' {
   if (explicitPrecision !== undefined) {
@@ -41,23 +40,24 @@ export function resolvePrecision(section?: SectionType, explicitPrecision?: numb
   }
 
   const settings = getSettings();
+  if (settings.precision !== undefined) {
+    return settings.precision;
+  }
+  if (settings.masterPrecision !== undefined) {
+    return settings.masterPrecision;
+  }
   if (section && settings.sectionPrecision && settings.sectionPrecision[section] !== undefined) {
     const secVal = settings.sectionPrecision[section];
     if (secVal !== undefined) return secVal;
   }
 
-  if (settings.masterPrecision !== undefined) {
-    return settings.masterPrecision;
-  }
-
-  // Sensible default: 2 for finance, auto (up to 8) for general/unit
-  return section === 'finance' ? 2 : 'auto';
+  return 'auto';
 }
 
 /**
  * Formats integer digits according to the specified grouping system.
  */
-function groupIntegerDigits(intPart: string, grouping: 'international' | 'european' | 'indian'): string {
+export function groupIntegerDigits(intPart: string, grouping: 'international' | 'european' | 'indian'): string {
   if (!intPart || intPart.length <= 3) {
     return intPart;
   }
@@ -66,7 +66,7 @@ function groupIntegerDigits(intPart: string, grouping: 'international' | 'europe
     const lastThree = intPart.substring(intPart.length - 3);
     const otherDigits = intPart.substring(0, intPart.length - 3);
     const withCommas = otherDigits.replace(/\B(?=(\d{2})+(?!\d))/g, ',');
-    return `${withCommas},${lastThree}`;
+    return withCommas + ',' + lastThree;
   }
 
   if (grouping === 'european') {
@@ -75,6 +75,27 @@ function groupIntegerDigits(intPart: string, grouping: 'international' | 'europe
 
   // international
   return intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+/**
+ * Formats all numeric literals inside an expression or formula with grouping commas
+ * according to the active grouping system (Indian Lakhs/Crores by default).
+ */
+export function formatExpressionGrouping(
+  expr: string,
+  groupingSetting?: GroupingMode
+): string {
+  if (!expr) return expr;
+  const grouping = resolveGrouping(groupingSetting);
+
+  // Match numbers (including those with commas or decimals)
+  return expr.replace(/[\d,]+(?:\.\d+)?/g, (match) => {
+    const raw = match.replace(/,/g, '');
+    if (!/^\d+(\.\d+)?$/.test(raw)) return match;
+    const parts = raw.split('.');
+    const groupedInt = groupIntegerDigits(parts[0], grouping);
+    return parts.length > 1 ? groupedInt + '.' + parts[1] : groupedInt;
+  });
 }
 
 /**
@@ -109,32 +130,32 @@ export function formatNumber(
   let formattedNumStr: string;
 
   if (typeof precision === 'number') {
-    // Fixed precision with half-up rounding
+    // Fixed precision with half-up rounding (1 to 10 decimal places)
     const fixedStr = d.toFixed(precision, Decimal.ROUND_HALF_UP);
     const parts = fixedStr.split('.');
     const groupedInt = groupIntegerDigits(parts[0], grouping);
 
     if (parts.length > 1 && precision > 0) {
-      formattedNumStr = `${groupedInt}${decimalSep}${parts[1]}`;
+      formattedNumStr = groupedInt + decimalSep + parts[1];
     } else {
       formattedNumStr = groupedInt;
     }
   } else {
-    // 'auto' precision: max 8 decimal places with trailing zero suppression
-    const fixedStr = d.toFixed(8, Decimal.ROUND_HALF_UP);
+    // 'auto' precision: max 10 decimal places with trailing zero suppression
+    const fixedStr = d.toFixed(10, Decimal.ROUND_HALF_UP);
     const parts = fixedStr.split('.');
     const groupedInt = groupIntegerDigits(parts[0], grouping);
 
     if (parts.length > 1) {
       const trimmedDecimals = parts[1].replace(/0+$/, '');
-      formattedNumStr = trimmedDecimals.length > 0 ? `${groupedInt}${decimalSep}${trimmedDecimals}` : groupedInt;
+      formattedNumStr = trimmedDecimals.length > 0 ? groupedInt + decimalSep + trimmedDecimals : groupedInt;
     } else {
       formattedNumStr = groupedInt;
     }
   }
 
   const sign = isNegative && !d.isZero() ? '-' : '';
-  const symbol = options?.currencySymbol ? `${options.currencySymbol} ` : '';
+  const symbol = options?.currencySymbol ? options.currencySymbol + ' ' : '';
 
-  return `${symbol}${sign}${formattedNumStr}`;
+  return symbol + sign + formattedNumStr;
 }

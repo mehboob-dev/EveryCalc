@@ -12,6 +12,7 @@ export interface UserSettings {
   showAdsAndOffers: boolean;
   language?: string;
   numberFormat?: 'auto' | 'international' | 'european' | 'indian';
+  precision?: number | 'auto';
   masterPrecision?: number | 'auto';
   sectionPrecision?: SectionPrecision;
   menuFavorites?: string[];
@@ -26,11 +27,12 @@ const DEFAULT_SETTINGS: UserSettings = {
   soundFeedback: true,
   defaultCalculatorId: 'NOR',
   showAdsAndOffers: true,
-  numberFormat: 'auto',
+  numberFormat: 'indian',
+  precision: 'auto',
   masterPrecision: 'auto',
   sectionPrecision: {
     general: 'auto',
-    finance: 2,
+    finance: 'auto',
     unit: 'auto'
   },
   menuFavorites: ['NOR', 'LON', 'TAX', 'UNT']
@@ -41,6 +43,10 @@ export function getSettings(): UserSettings {
     const raw = localStorage.getItem(SETTINGS_KEY);
     if (!raw) return { ...DEFAULT_SETTINGS };
     const parsed = JSON.parse(raw);
+    const resolvedPrecision = parsed.precision !== undefined
+      ? parsed.precision
+      : (parsed.masterPrecision !== undefined ? parsed.masterPrecision : 'auto');
+
     return {
       angleMode: parsed.angleMode === 'RAD' ? 'RAD' : 'DEG',
       hapticFeedback: typeof parsed.hapticFeedback === 'boolean' ? parsed.hapticFeedback : true,
@@ -48,8 +54,9 @@ export function getSettings(): UserSettings {
       defaultCalculatorId: typeof parsed.defaultCalculatorId === 'string' ? parsed.defaultCalculatorId : 'NOR',
       showAdsAndOffers: typeof parsed.showAdsAndOffers === 'boolean' ? parsed.showAdsAndOffers : true,
       language: typeof parsed.language === 'string' ? parsed.language : undefined,
-      numberFormat: ['auto', 'international', 'european', 'indian'].includes(parsed.numberFormat) ? parsed.numberFormat : 'auto',
-      masterPrecision: parsed.masterPrecision !== undefined ? parsed.masterPrecision : 'auto',
+      numberFormat: ['auto', 'international', 'european', 'indian'].includes(parsed.numberFormat) ? parsed.numberFormat : 'indian',
+      precision: resolvedPrecision,
+      masterPrecision: resolvedPrecision,
       sectionPrecision: parsed.sectionPrecision ? { ...DEFAULT_SETTINGS.sectionPrecision, ...parsed.sectionPrecision } : DEFAULT_SETTINGS.sectionPrecision,
       menuFavorites: Array.isArray(parsed.menuFavorites) ? parsed.menuFavorites : DEFAULT_SETTINGS.menuFavorites,
       menuOrder: Array.isArray(parsed.menuOrder) ? parsed.menuOrder : undefined

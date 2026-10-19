@@ -1,4 +1,4 @@
-import { formatNumber, getIndianWords } from './core/math.ts';
+import { formatNumber, formatExpressionGrouping, getIndianWords } from './core/math.ts';
 import { evaluateExpression } from './core/evaluator.ts';
 import { EXTENDED_CONSTANTS } from './core/constants.ts';
 import { getHistory, addHistory, clearHistory, HistoryItem } from './core/history.ts';
@@ -211,7 +211,7 @@ function updateDisplay() {
   }
 
   if (displayWords) {
-    displayWords.textContent = getIndianWords(state.formula);
+    displayWords.textContent = getIndianWords(state.formula.replace(/,/g, ''));
   }
 
   if (displayExpr) {
@@ -274,6 +274,27 @@ function insertAtCursor(str: string) {
       state.cursorPos += str.length;
     }
   }
+
+  // Format numeric tokens with chosen grouping system and adjust cursorPos
+  const unformattedBefore = state.formula.slice(0, state.cursorPos).replace(/,/g, '');
+  state.formula = formatExpressionGrouping(state.formula);
+  let count = 0;
+  let newPos = state.formula.length;
+  for (let i = 0; i < state.formula.length; i++) {
+    if (count === unformattedBefore.length) {
+      newPos = i;
+      break;
+    }
+    if (state.formula[i] !== ',') {
+      count++;
+    }
+    if (count === unformattedBefore.length) {
+      newPos = i + 1;
+      break;
+    }
+  }
+  state.cursorPos = newPos;
+
   updateDisplay();
 }
 
@@ -289,30 +310,50 @@ function deleteAtCursor() {
   }
   if (state.cursorPos <= 0) return;
 
-  const before = state.formula.slice(0, state.cursorPos);
+  let before = state.formula.slice(0, state.cursorPos);
   const after = state.formula.slice(state.cursorPos);
+
+  if (before.endsWith(',')) {
+    before = before.slice(0, -1);
+  }
 
   const fnMatch = before.match(/(asin|acos|atan|sinh|cosh|tanh|sqrt|sin|cos|tan|log|ln)\($/);
   if (fnMatch) {
-    state.formula = before.slice(0, -fnMatch[0].length) + after;
-    state.cursorPos -= fnMatch[0].length;
+    before = before.slice(0, -fnMatch[0].length);
   } else if (before.endsWith(' ') && before.length >= 3) {
     const opMatch = before.match(/\s[+\-−×*÷/^]\s$/);
     if (opMatch) {
-      state.formula = before.slice(0, -opMatch[0].length) + after;
-      state.cursorPos -= opMatch[0].length;
+      before = before.slice(0, -opMatch[0].length);
     } else {
-      state.formula = before.slice(0, -1) + after;
-      state.cursorPos--;
+      before = before.slice(0, -1);
     }
   } else {
-    state.formula = before.slice(0, -1) + after;
-    state.cursorPos--;
+    before = before.slice(0, -1);
   }
 
-  if (state.formula === '') {
+  const unformattedBefore = before.replace(/,/g, '');
+  const combined = before + after;
+  if (combined === '' || combined === '-') {
     state.formula = '0';
     state.cursorPos = 1;
+  } else {
+    state.formula = formatExpressionGrouping(combined);
+    let count = 0;
+    let newPos = state.formula.length;
+    for (let i = 0; i < state.formula.length; i++) {
+      if (count === unformattedBefore.length) {
+        newPos = i;
+        break;
+      }
+      if (state.formula[i] !== ',') {
+        count++;
+      }
+      if (count === unformattedBefore.length) {
+        newPos = i + 1;
+        break;
+      }
+    }
+    state.cursorPos = newPos;
   }
   updateDisplay();
 }
@@ -647,8 +688,11 @@ function setupApp() {
       <!-- Permanent Desktop Sidebar for screens >= 768px -->
       <aside class="desktop-sidebar">
         <div class="desktop-sidebar-header">
-          <span class="desktop-logo-icon">🧮</span>
-          <span class="desktop-logo-text">EveryCalc</span>
+          <div class="desktop-logo-group">
+            <span class="desktop-logo-icon">🧮</span>
+            <span class="desktop-logo-text">EveryCalc</span>
+          </div>
+          <button id="btn-collapse-sidebar" class="btn-sidebar-collapse" title="Collapse sidebar" aria-label="Collapse sidebar">◀</button>
         </div>
         <div class="desktop-sidebar-search">
           <span class="search-icon">🔍</span>
@@ -819,7 +863,7 @@ function setupApp() {
           <span id="settings-title">${t('settings')}</span>
           <button id="btn-close-settings" class="btn-icon">✕</button>
         </div>
-        <div class="module-view" style="padding: 16px;">
+        <div class="drawer-settings-scroll">
           <div class="input-card">
             <label class="input-label" id="lbl-language">${t('language')} / Idioma</label>
             <select id="set-language" class="form-select" style="width: 100%; margin-bottom: 14px;">
@@ -828,36 +872,16 @@ function setupApp() {
 
             <label class="input-label" id="lbl-number-format">${t('numberFormat')}</label>
             <select id="set-number-format" class="form-select" style="width: 100%; margin-bottom: 14px;">
-              <option value="auto" ${userSettings.numberFormat === 'auto' ? 'selected' : ''}>🌐 Auto (Locale Based)</option>
+              <option value="indian" ${userSettings.numberFormat === 'indian' ? 'selected' : ''}>Indian Lakhs & Crores (12,34,567.89)</option>
               <option value="international" ${userSettings.numberFormat === 'international' ? 'selected' : ''}>Standard International (1,234,567.89)</option>
               <option value="european" ${userSettings.numberFormat === 'european' ? 'selected' : ''}>European (1.234.567,89)</option>
-              <option value="indian" ${userSettings.numberFormat === 'indian' ? 'selected' : ''}>Indian Lakhs & Crores (12,34,567.89)</option>
+              <option value="auto" ${userSettings.numberFormat === 'auto' ? 'selected' : ''}>🌐 Auto (Locale Based)</option>
             </select>
 
-            <label class="input-label" id="lbl-master-precision">${t('masterPrecision')}</label>
-            <select id="set-master-precision" class="form-select" style="width: 100%; margin-bottom: 14px;">
-              <option value="auto" ${userSettings.masterPrecision === 'auto' ? 'selected' : ''}>✨ Auto (Dynamic up to 8)</option>
-              <option value="0" ${userSettings.masterPrecision === 0 ? 'selected' : ''}>0 (Integers)</option>
-              <option value="2" ${userSettings.masterPrecision === 2 ? 'selected' : ''}>2 Decimals</option>
-              <option value="4" ${userSettings.masterPrecision === 4 ? 'selected' : ''}>4 Decimals</option>
-              <option value="6" ${userSettings.masterPrecision === 6 ? 'selected' : ''}>6 Decimals</option>
-              <option value="8" ${userSettings.masterPrecision === 8 ? 'selected' : ''}>8 Decimals</option>
-            </select>
-
-            <label class="input-label" id="lbl-finance-precision">${t('financePrecision')}</label>
-            <select id="set-finance-precision" class="form-select" style="width: 100%; margin-bottom: 14px;">
-              <option value="2" ${userSettings.sectionPrecision?.finance === 2 ? 'selected' : ''}>2 Decimals (Standard Currency)</option>
-              <option value="auto" ${userSettings.sectionPrecision?.finance === 'auto' ? 'selected' : ''}>Auto (Dynamic)</option>
-              <option value="0" ${userSettings.sectionPrecision?.finance === 0 ? 'selected' : ''}>0 Decimals (Round to Whole)</option>
-              <option value="4" ${userSettings.sectionPrecision?.finance === 4 ? 'selected' : ''}>4 Decimals (High Precision Forex)</option>
-            </select>
-
-            <label class="input-label" id="lbl-unit-precision">${t('unitPrecision')}</label>
-            <select id="set-unit-precision" class="form-select" style="width: 100%; margin-bottom: 14px;">
-              <option value="auto" ${userSettings.sectionPrecision?.unit === 'auto' ? 'selected' : ''}>Auto (Dynamic Trim)</option>
-              <option value="2" ${userSettings.sectionPrecision?.unit === 2 ? 'selected' : ''}>2 Decimals</option>
-              <option value="4" ${userSettings.sectionPrecision?.unit === 4 ? 'selected' : ''}>4 Decimals</option>
-              <option value="6" ${userSettings.sectionPrecision?.unit === 6 ? 'selected' : ''}>6 Decimals</option>
+            <label class="input-label" id="lbl-precision">Decimal Precision</label>
+            <select id="set-precision" class="form-select" style="width: 100%; margin-bottom: 14px;">
+              <option value="auto" ${userSettings.precision === 'auto' ? 'selected' : ''}>✨ Auto (Dynamic Trim)</option>
+              ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => `<option value="${n}" ${userSettings.precision === n ? 'selected' : ''}>${n} (${n} decimal place${n > 1 ? 's' : ''})</option>`).join('')}
             </select>
 
             <label class="input-label" id="lbl-angle-mode">${t('angleMode')}</label>
@@ -882,15 +906,10 @@ function setupApp() {
             <select id="set-default-tool" class="form-select" style="width: 100%;">
               ${CALCULATOR_MODES.map((m) => `<option value="${m.id}" ${m.id === userSettings.defaultCalculatorId ? 'selected' : ''}>${m.icon} ${getModuleName(m.id)}</option>`).join('')}
             </select>
-
-            <label class="input-label">Promotional Offers & Partner Deals</label>
-            <div class="segmented-control">
-              <button id="set-ads-on" class="seg-btn ${userSettings.showAdsAndOffers ? 'active' : ''}">Enabled</button>
-              <button id="set-ads-off" class="seg-btn ${!userSettings.showAdsAndOffers ? 'active' : ''}">Disabled</button>
-            </div>
           </div>
         </div>
       </div>
+    </div>
     </div>
 
     <!-- PWA Install Guide Modal for Mobile & Browsers -->
@@ -1482,12 +1501,42 @@ function setupApp() {
     updateDisplay();
   });
 
-  // Drawer modal controls
+  // Drawer modal controls & Desktop Sidebar collapse toggle
   const modalMenu = document.getElementById('modal-menu');
   const btnMenu = document.getElementById('btn-menu');
   const btnCloseMenu = document.getElementById('btn-close-menu');
+  const desktopShell = document.querySelector('.desktop-shell');
+  const btnCollapseSidebar = document.getElementById('btn-collapse-sidebar');
 
-  btnMenu?.addEventListener('click', () => modalMenu?.classList.add('open'));
+  function toggleDesktopSidebar(forceState?: boolean): void {
+    if (!desktopShell) return;
+    const isCollapsed = desktopShell.classList.contains('sidebar-collapsed');
+    const targetState = typeof forceState === 'boolean' ? forceState : !isCollapsed;
+    desktopShell.classList.toggle('sidebar-collapsed', targetState);
+    try {
+      localStorage.setItem('everycalc-sidebar-collapsed', targetState ? 'true' : 'false');
+    } catch {}
+  }
+
+  // Restore remembered sidebar state on widescreen / foldables
+  try {
+    const savedState = localStorage.getItem('everycalc-sidebar-collapsed');
+    if (savedState === 'true' && desktopShell) {
+      desktopShell.classList.add('sidebar-collapsed');
+    }
+  } catch {}
+
+  btnCollapseSidebar?.addEventListener('click', () => {
+    toggleDesktopSidebar(true);
+  });
+
+  btnMenu?.addEventListener('click', () => {
+    if (window.innerWidth >= 700) {
+      toggleDesktopSidebar();
+    } else {
+      modalMenu?.classList.add('open');
+    }
+  });
   btnCloseMenu?.addEventListener('click', () => modalMenu?.classList.remove('open'));
   modalMenu?.addEventListener('click', (e) => {
     if (e.target === modalMenu) modalMenu.classList.remove('open');
@@ -1605,32 +1654,17 @@ function setupApp() {
     showToast(`Number format: ${setNumberFormat.options[setNumberFormat.selectedIndex].text}`);
   });
 
-  const setMasterPrecision = document.getElementById('set-master-precision') as HTMLSelectElement;
-  setMasterPrecision?.addEventListener('change', () => {
-    const val = setMasterPrecision.value === 'auto' ? 'auto' : parseInt(setMasterPrecision.value, 10);
+  const setPrecision = document.getElementById('set-precision') as HTMLSelectElement;
+  setPrecision?.addEventListener('change', () => {
+    const val: 'auto' | number = setPrecision.value === 'auto' ? 'auto' : parseInt(setPrecision.value, 10);
+    userSettings.precision = val;
     userSettings.masterPrecision = val;
-    updateSettings({ masterPrecision: val });
+    updateSettings({ precision: val, masterPrecision: val });
     updateDisplay();
     switchMode(state.activeCalculatorId);
+    showToast(`Precision: ${setPrecision.options[setPrecision.selectedIndex].text}`);
   });
 
-  const setFinancePrecision = document.getElementById('set-finance-precision') as HTMLSelectElement;
-  setFinancePrecision?.addEventListener('change', () => {
-    const val: 'auto' | number = setFinancePrecision.value === 'auto' ? 'auto' : parseInt(setFinancePrecision.value, 10);
-    const updatedSec = { ...userSettings.sectionPrecision, finance: val };
-    userSettings.sectionPrecision = updatedSec;
-    updateSettings({ sectionPrecision: updatedSec });
-    switchMode(state.activeCalculatorId);
-  });
-
-  const setUnitPrecision = document.getElementById('set-unit-precision') as HTMLSelectElement;
-  setUnitPrecision?.addEventListener('change', () => {
-    const val: 'auto' | number = setUnitPrecision.value === 'auto' ? 'auto' : parseInt(setUnitPrecision.value, 10);
-    const updatedSec = { ...userSettings.sectionPrecision, unit: val };
-    userSettings.sectionPrecision = updatedSec;
-    updateSettings({ sectionPrecision: updatedSec });
-    switchMode(state.activeCalculatorId);
-  });
 
   const modalLanguage = document.getElementById('modal-language');
   const btnCloseLanguage = document.getElementById('btn-close-language');

@@ -1080,6 +1080,27 @@ body {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+
+.drawer-settings-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 14px 16px 40px;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(150, 150, 150, 0.3) transparent;
+}
+
+.drawer-settings-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+
+.drawer-settings-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(150, 150, 150, 0.3);
+  border-radius: 4px;
+}
+
 .drawer-history {
   width: 86%;
   max-width: 360px;
@@ -1799,6 +1820,8 @@ body {
    Activates widescreen multi-pane layout for unfolded foldables
    (Vivo X Fold 3 ~800px-880px, Galaxy Z Fold 768px-884px, Pixel Fold,
    OnePlus Open), tablets, and desktop workstations.
+   Features a smooth collapsible navigation sidebar and fluid
+   dual-pane layout ensuring history tape never overflows off-screen.
    ========================================================== */
 @media (min-width: 700px) {
   #app {
@@ -1818,32 +1841,85 @@ body {
     box-shadow: none;
   }
 
+  /* Collapsible Desktop Sidebar */
   .desktop-sidebar {
     display: flex;
     flex-direction: column;
-    width: 220px;
-    min-width: 200px;
+    width: 200px;
+    min-width: 190px;
+    max-width: 210px;
     height: 100%;
     background-color: var(--bg-secondary);
     border-right: 1px solid var(--border-color);
     overflow: hidden;
+    transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+                min-width 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+                max-width 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.2s ease,
+                visibility 0.22s ease;
+    will-change: width, opacity;
+  }
+
+  /* Collapsed Sidebar State - expands workspace and history pane */
+  .desktop-shell.sidebar-collapsed .desktop-sidebar {
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    opacity: 0;
+    visibility: hidden;
+    border-right: none;
+    pointer-events: none;
   }
 
   .desktop-sidebar-header {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 14px 16px;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 12px 14px;
     border-bottom: 1px solid var(--border-color);
     flex-shrink: 0;
+  }
+
+  .desktop-logo-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .btn-sidebar-collapse {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 13px;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+  }
+
+  .btn-sidebar-collapse:hover {
+    background-color: var(--bg-surface-hover);
+    color: var(--text-primary);
+  }
+
+  .btn-sidebar-collapse:active {
+    transform: scale(0.92);
   }
 
   .desktop-sidebar-search {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin: 10px 12px 6px;
-    padding: 7px 10px;
+    margin: 8px 10px 4px;
+    padding: 6px 10px;
     background-color: var(--bg-primary);
     border-radius: 12px;
     border: 1px solid var(--border-color);
@@ -1852,7 +1928,7 @@ body {
   }
 
   .desktop-sidebar-search .search-icon {
-    font-size: 13px;
+    font-size: 12px;
     opacity: 0.6;
   }
 
@@ -1861,30 +1937,33 @@ body {
     border: none;
     outline: none;
     color: var(--text-primary);
-    font-size: 13px;
+    font-size: 12.5px;
     width: 100%;
     font-family: inherit;
   }
 
   .desktop-logo-icon {
-    font-size: 22px;
+    font-size: 20px;
     line-height: 1;
   }
 
   .desktop-logo-text {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 800;
     letter-spacing: -0.3px;
     color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .desktop-sidebar-list {
     flex: 1;
     overflow-y: auto;
-    padding: 6px 8px 16px;
+    padding: 6px 6px 16px;
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 2px;
     scrollbar-width: thin;
     scrollbar-color: rgba(150, 150, 150, 0.25) transparent;
   }
@@ -1901,13 +1980,13 @@ body {
   .sidebar-item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    border-radius: 12px;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 10px;
     background: transparent;
     border: none;
     color: var(--text-secondary);
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 600;
     cursor: pointer;
     text-align: left;
@@ -1927,8 +2006,8 @@ body {
   }
 
   .sidebar-item-icon {
-    font-size: 16px;
-    width: 22px;
+    font-size: 15px;
+    width: 20px;
     text-align: center;
     flex-shrink: 0;
   }
@@ -1946,11 +2025,15 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.8px;
     color: var(--text-muted);
-    padding: 10px 12px 4px;
+    padding: 8px 10px 4px;
   }
 
-  /* Hide mobile hamburger drawer toggle and mobile history drawer button on desktop / unfolded screens */
-  .desktop-main-area .calc-header #btn-menu,
+  /* Show #btn-menu on desktop as sidebar expand/collapse toggle */
+  .desktop-main-area .calc-header #btn-menu {
+    display: flex !important;
+  }
+
+  /* Hide mobile history drawer button because desktop history pane is on-screen */
   .desktop-main-area .calc-header #btn-history {
     display: none !important;
   }
@@ -1960,95 +2043,102 @@ body {
     display: flex;
     flex-direction: row;
     flex: 1;
-    gap: 16px;
-    padding: 12px 18px;
+    min-width: 0;
+    gap: 12px;
+    padding: 10px 14px;
     justify-content: flex-start;
     align-items: stretch;
-    height: calc(100vh - 58px);
-    height: calc(100dvh - 58px);
+    height: calc(100vh - 56px);
+    height: calc(100dvh - 56px);
     overflow: hidden;
+    box-sizing: border-box;
   }
 
   .calc-main-column {
-    width: 340px;
-    min-width: 300px;
-    max-width: 380px;
+    width: clamp(280px, 42vw, 320px);
+    min-width: 270px;
+    max-width: 330px;
     display: flex;
     flex-direction: column;
     flex: none;
     overflow-y: auto;
-    padding-bottom: 16px;
+    padding-bottom: 14px;
+    box-sizing: border-box;
   }
 
   .calc-display {
-    padding: 12px 18px;
-    border-radius: 18px;
+    padding: 10px 14px;
+    border-radius: 16px;
+    margin-bottom: 6px;
   }
 
   .display-main {
-    font-size: clamp(32px, 4vw, 42px);
-    min-height: 48px;
+    font-size: clamp(30px, 3.8vw, 38px);
+    min-height: 44px;
   }
 
   .calc-keypad {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    padding: 8px 0 0 0;
+    gap: 7px;
+    padding: 6px 0 0 0;
   }
 
   .calc-btn {
     aspect-ratio: unset;
-    height: clamp(46px, 6.2vh, 54px);
-    border-radius: 16px;
-    font-size: 21px;
+    height: clamp(44px, 5.8vh, 50px);
+    border-radius: 14px;
+    font-size: 20px;
   }
 
   .calc-btn.btn-op {
-    font-size: 23px;
+    font-size: 22px;
   }
 
   .calc-sci-grid {
-    padding: 4px 0;
-    gap: 6px;
+    padding: 3px 0;
+    gap: 5px;
   }
 
   .sci-btn {
-    height: 36px;
-    border-radius: 12px;
-    font-size: 13px;
+    height: 34px;
+    border-radius: 10px;
+    font-size: 12px;
   }
 
+  /* History Tape Pane: min-width: 0 prevents any off-screen blowout */
   .desktop-history-pane {
     display: flex;
     flex-direction: column;
     flex: 1;
-    min-width: 180px;
-    max-width: 560px;
+    min-width: 0;
+    max-width: 100%;
     height: 100%;
     background-color: var(--bg-surface);
-    border-radius: 20px;
-    padding: 14px 18px;
+    border-radius: 18px;
+    padding: 12px 14px;
     box-shadow: var(--clay-card-drop), var(--clay-card-light), var(--clay-card-dark);
     overflow: hidden;
+    box-sizing: border-box;
   }
 
   .desktop-history-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 13.5px;
+    font-size: 13px;
     font-weight: 700;
     color: var(--text-secondary);
-    padding-bottom: 10px;
+    padding-bottom: 8px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
   }
 
   .btn-clear-tape {
     background: transparent;
     border: none;
     color: var(--danger-color, #ef4444);
-    font-size: 12.5px;
+    font-size: 12px;
     font-weight: 600;
     cursor: pointer;
     padding: 3px 8px;
@@ -2063,11 +2153,13 @@ body {
   .desktop-history-list {
     flex: 1;
     overflow-y: auto;
-    margin-top: 10px;
+    overflow-x: hidden;
+    margin-top: 8px;
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding-right: 4px;
+    padding-right: 2px;
+    min-width: 0;
   }
 
   /* Specialized Modular Tools Expansive Desktop Workspace */
@@ -2078,7 +2170,7 @@ body {
     flex-direction: column;
     align-items: stretch;
     width: 100%;
-    padding: 16px 24px 48px;
+    padding: 14px 20px 48px;
     box-sizing: border-box;
   }
 
@@ -2094,8 +2186,8 @@ body {
   /* Dual-Pane Semantic Workspace Layout */
   .workspace-layout {
     display: grid;
-    grid-template-columns: minmax(300px, 1.15fr) minmax(260px, 1fr);
-    gap: 20px;
+    grid-template-columns: minmax(280px, 1.15fr) minmax(240px, 1fr);
+    gap: 16px;
     width: 100%;
     align-items: start;
     box-sizing: border-box;
@@ -2104,17 +2196,17 @@ body {
   .workspace-inputs-pane {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
     width: 100%;
     min-width: 0;
   }
 
   .workspace-analytics-pane {
     position: sticky;
-    top: 14px;
+    top: 12px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
     width: 100%;
     min-width: 0;
   }
@@ -2123,7 +2215,7 @@ body {
   @media (max-width: 850px) {
     .workspace-layout {
       grid-template-columns: 1fr;
-      gap: 16px;
+      gap: 14px;
     }
 
     .workspace-analytics-pane {
@@ -2134,8 +2226,8 @@ body {
   /* Fallback 2-column grid for flat module views */
   .module-view:not(:has(.workspace-layout)) {
     display: grid;
-    grid-template-columns: minmax(300px, 1.15fr) minmax(260px, 1fr);
-    gap: 20px;
+    grid-template-columns: minmax(280px, 1.15fr) minmax(240px, 1fr);
+    gap: 16px;
     width: 100%;
     align-items: start;
   }
@@ -2149,24 +2241,24 @@ body {
   .input-card,
   .result-card {
     margin-bottom: 0;
-    padding: 20px 22px;
-    border-radius: 20px;
+    padding: 18px 20px;
+    border-radius: 18px;
   }
 
   .module-view .input-label {
     font-size: 13px;
-    margin-bottom: 7px;
-    margin-top: 12px;
+    margin-bottom: 6px;
+    margin-top: 10px;
   }
 
   .module-view .form-input {
-    padding: 10px 14px;
-    font-size: 15px;
-    border-radius: 12px;
+    padding: 9px 12px;
+    font-size: 14.5px;
+    border-radius: 10px;
   }
 
   .module-view .result-row {
-    padding: 10px 0;
+    padding: 9px 0;
   }
 }
 
@@ -2176,8 +2268,9 @@ body {
    ========================================================== */
 @media (min-width: 1024px) {
   .desktop-sidebar {
-    width: 260px;
-    min-width: 260px;
+    width: 250px;
+    min-width: 240px;
+    max-width: 270px;
   }
 
   .desktop-sidebar-header {
@@ -2186,7 +2279,7 @@ body {
   }
 
   .desktop-sidebar-search {
-    margin: 12px 14px 6px;
+    margin: 10px 14px 6px;
     padding: 8px 12px;
   }
 
@@ -2199,16 +2292,16 @@ body {
   }
 
   .view-general-container {
-    gap: 24px;
-    padding: 16px 28px;
+    gap: 20px;
+    padding: 16px 24px;
     height: calc(100vh - 65px);
     height: calc(100dvh - 65px);
   }
 
   .calc-main-column {
-    width: 420px;
+    width: 400px;
     min-width: 340px;
-    max-width: 460px;
+    max-width: 440px;
   }
 
   .calc-display {
@@ -2231,7 +2324,7 @@ body {
   }
 
   .desktop-history-pane {
-    min-width: 280px;
+    min-width: 260px;
     padding: 18px 20px;
     border-radius: 22px;
   }

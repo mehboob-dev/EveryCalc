@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { formatNumber, resolveGrouping, resolvePrecision } from '../src/core/format.ts';
+import { formatNumber, resolveGrouping, resolvePrecision, formatExpressionGrouping } from '../src/core/format.ts';
 import { updateSettings } from '../src/core/settings.ts';
 import { setLanguage } from '../src/core/i18n.ts';
 
@@ -23,31 +23,49 @@ Object.defineProperty(globalThis, 'localStorage', {
   writable: true
 });
 
-describe('Cross-cutting Number Formatting & Precision Engine', () => {
+describe('Cross-cutting Number Formatting, Comma Grouping & Simplified Precision', () => {
   beforeEach(() => {
     localStorageMock.clear();
     setLanguage('en', false);
     updateSettings({
-      numberFormat: 'auto',
-      masterPrecision: 'auto',
-      sectionPrecision: { general: 'auto', finance: 2, unit: 'auto' }
+      numberFormat: 'indian',
+      precision: 'auto'
     });
   });
 
-  it('correctly resolves grouping for explicit and locale-driven modes', () => {
+  it('correctly resolves grouping for explicit modes and defaults to Indian numbering', () => {
     expect(resolveGrouping('international')).toBe('international');
     expect(resolveGrouping('european')).toBe('european');
     expect(resolveGrouping('indian')).toBe('indian');
 
-    // Auto with languages
+    // Auto with languages: de/fr/es to european, otherwise indian
     expect(resolveGrouping('auto', 'hi')).toBe('indian');
     expect(resolveGrouping('auto', 'de')).toBe('european');
     expect(resolveGrouping('auto', 'fr')).toBe('european');
     expect(resolveGrouping('auto', 'es')).toBe('european');
-    expect(resolveGrouping('auto', 'en')).toBe('international');
+    expect(resolveGrouping('auto', 'en')).toBe('indian');
   });
 
-  it('formats international numbers (comma grouping, period decimal)', () => {
+  it('formats Indian numbers with consistent Lakhs & Crores grouping everywhere', () => {
+    const res = formatNumber('12345678.50', { grouping: 'indian', precision: 2 });
+    expect(res).toBe('1,23,45,678.50');
+
+    const oneLakh = formatNumber('100000', { grouping: 'indian', precision: 2 });
+    expect(oneLakh).toBe('1,00,000.00');
+
+    const tenLakh = formatNumber('1000000', { grouping: 'indian', precision: 'auto' });
+    expect(tenLakh).toBe('10,00,000');
+  });
+
+  it('formats expressions with grouping commas matching active standard', () => {
+    expect(formatExpressionGrouping('100000 + 50000', 'indian')).toBe('1,00,000 + 50,000');
+    expect(formatExpressionGrouping('1000000 * 2', 'indian')).toBe('10,00,000 * 2');
+    expect(formatExpressionGrouping('sin(100000)', 'indian')).toBe('sin(1,00,000)');
+
+    expect(formatExpressionGrouping('100000 + 50000', 'international')).toBe('100,000 + 50,000');
+  });
+
+  it('formats international numbers (3-digit grouping, period decimal)', () => {
     const res = formatNumber('1234567.8912', { grouping: 'international', precision: 2 });
     expect(res).toBe('1,234,567.89');
   });
@@ -57,24 +75,20 @@ describe('Cross-cutting Number Formatting & Precision Engine', () => {
     expect(res).toBe('1.234.567,89');
   });
 
-  it('formats Indian numbers (Lakhs & Crores grouping)', () => {
-    const res = formatNumber('12345678.50', { grouping: 'indian', precision: 2 });
-    expect(res).toBe('1,23,45,678.50');
+  it('supports simplified single precision options from 1 to 10', () => {
+    for (let p = 1; p <= 10; p++) {
+      updateSettings({ precision: p });
+      expect(resolvePrecision()).toBe(p);
+      const val = formatNumber('12.34567891234', { precision: p });
+      const decimalCount = val.split('.')[1].length;
+      expect(decimalCount).toBe(p);
+    }
   });
 
-  it('handles auto precision by trimming trailing zeros', () => {
-    expect(formatNumber('45.00000000', { grouping: 'international', precision: 'auto' })).toBe('45');
-    expect(formatNumber('45.25000000', { grouping: 'international', precision: 'auto' })).toBe('45.25');
-    expect(formatNumber('45.123456789', { grouping: 'international', precision: 'auto' })).toBe('45.12345679');
-  });
-
-  it('applies section precision defaults (2 for finance, auto for general)', () => {
-    updateSettings({
-      sectionPrecision: { finance: 2, general: 'auto', unit: 4 }
-    });
-    expect(resolvePrecision('finance')).toBe(2);
-    expect(resolvePrecision('general')).toBe('auto');
-    expect(resolvePrecision('unit')).toBe(4);
+  it('handles auto precision by trimming trailing zeros up to 10 decimals', () => {
+    expect(formatNumber('45.0000000000', { grouping: 'international', precision: 'auto' })).toBe('45');
+    expect(formatNumber('45.2500000000', { grouping: 'international', precision: 'auto' })).toBe('45.25');
+    expect(formatNumber('45.1234567891', { grouping: 'international', precision: 'auto' })).toBe('45.1234567891');
   });
 
   it('handles negative numbers, zeros, and non-numeric strings gracefully', () => {
