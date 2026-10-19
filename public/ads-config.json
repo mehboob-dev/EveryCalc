@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "updatedAt": "2026-10-18T00:00:00Z",
+  "updatedAt": "2026-10-19T00:00:00Z",
   "adsense": {
     "enabled": false,
     "client": "ca-pub-0000000000000000",
     "slot": "0000000000",
     "testMode": false,
     "placeholder": {
-      "enabled": true,
+      "enabled": false,
       "badge": "Sponsor Space",
       "icon": "📢",
       "title": "Advertise on EveryCalc",
@@ -30,6 +30,7 @@
     "IRA": {
       "id": "aff-ira-angelone",
       "toolId": "IRA",
+      "enabled": true,
       "title": "Start this SIP with 0% Brokerage",
       "partnerName": "Angel One / Upstox",
       "badgeText": "Verified Partner",
@@ -53,6 +54,7 @@
     "ITX": {
       "id": "aff-itx-elss",
       "toolId": "ITX",
+      "enabled": false,
       "title": "Save up to ₹46,800 under Section 80C",
       "partnerName": "Tax-Saving Mutual Funds (ELSS)",
       "badgeText": "Tax Saver",
@@ -64,6 +66,7 @@
     "GLD": {
       "id": "aff-gld-digital",
       "toolId": "GLD",
+      "enabled": false,
       "title": "Buy 24K 99.9% Pure Digital Gold from ₹10",
       "partnerName": "Augmont / SafeGold Partner",
       "badgeText": "100% Insured",
@@ -75,6 +78,7 @@
     "TAX": {
       "id": "aff-tax-billing",
       "toolId": "TAX",
+      "enabled": false,
       "title": "Automate GST Invoicing & E-Way Bills",
       "partnerName": "myBillBook / Vyapar",
       "badgeText": "GST Ready",
