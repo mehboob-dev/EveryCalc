@@ -18,6 +18,7 @@ import { AnniversaryModule } from './modules/anniversary.ts';
 import { GoldModule } from './modules/gold.ts';
 import { IncomeTaxModule } from './modules/income_tax.ts';
 import { SalaryModule } from './modules/salary.ts';
+import { PppModule } from './modules/ppp.ts';
 import {
   initLanguage,
   getLanguage,
@@ -32,6 +33,7 @@ import {
 const MODULE_REGISTRY: Record<string, CalculatorModule> = {
   UNT: UnitModule,
   CUR: CurrencyModule,
+  PPP: PppModule,
   DCT: DiscountModule,
   LON: LoanModule,
   IRA: SavingsModule,
@@ -66,6 +68,7 @@ const CALCULATOR_MODES = [
   { id: 'SAL', name: 'In-Hand Salary Calculator', icon: '💼' },
   { id: 'UNT', name: 'Unit Converter', icon: '📏' },
   { id: 'CUR', name: 'Currency Converter', icon: '💱' },
+  { id: 'PPP', name: 'Purchasing Power Parity (PPP)', icon: '🌍' },
   { id: 'DCT', name: 'Discount Calculator', icon: '🏷️' },
   { id: 'TIP', name: 'Tip Calculator', icon: '🍽️' },
   { id: 'PER', name: 'Percentage Calculator', icon: '📊' },
@@ -93,7 +96,7 @@ const MENU_CATEGORIES: MenuCategoryDef[] = [
     id: 'finance',
     name: 'Finance & India',
     badge: 'India & Money',
-    moduleIds: ['TAX', 'GLD', 'LON', 'IRA', 'ITX', 'SAL', 'CUR']
+    moduleIds: ['TAX', 'GLD', 'LON', 'IRA', 'ITX', 'SAL', 'CUR', 'PPP']
   },
   {
     id: 'everyday',
@@ -1333,10 +1336,20 @@ function setupApp() {
       touchStartY = e.touches[0].clientY;
       const target = e.target as HTMLElement;
 
-      // Detect if touch originated in the sidebar or near the left edge (<= 70px)
+      const isMobile = window.innerWidth < 700;
       const inSidebar = !!target.closest('.desktop-sidebar');
-      const nearLeftEdge = touchStartX <= 70;
-      isSwipingSidebar = inSidebar || nearLeftEdge;
+      const inDrawer = !!target.closest('#modal-menu');
+      const drawerIsOpen = !!modalMenu?.classList.contains('open');
+
+      if (isMobile) {
+        // On folded/mobile screen: allow swipe-open from left half (<= 45% or 160px),
+        // and allow swipe-close from anywhere when drawer is open
+        isSwipingSidebar = drawerIsOpen || inDrawer || touchStartX <= Math.max(160, window.innerWidth * 0.45);
+      } else {
+        // Desktop / Foldable widescreen (>=700px)
+        const nearLeftEdge = touchStartX <= 100;
+        isSwipingSidebar = inSidebar || nearLeftEdge;
+      }
     },
     { passive: true }
   );
@@ -1351,10 +1364,10 @@ function setupApp() {
       const deltaX = touchEndX - touchStartX;
       const deltaY = touchEndY - touchStartY;
 
-      // Only trigger if predominantly horizontal swipe (> 1.3x vertical and > 40px distance)
-      if (Math.abs(deltaX) > Math.abs(deltaY) * 1.3 && Math.abs(deltaX) > 40) {
+      // Trigger if predominantly horizontal swipe (> 1.15x vertical and > 38px distance)
+      if (Math.abs(deltaX) > Math.abs(deltaY) * 1.15 && Math.abs(deltaX) > 38) {
         if (window.innerWidth >= 700) {
-          // Desktop / Foldable (>=700px)
+          // Desktop / Unfolded screen (>=700px)
           if (deltaX > 0 && desktopShell?.classList.contains('sidebar-collapsed')) {
             // Swipe right -> Expand sidebar
             toggleDesktopSidebar(false);
@@ -1363,9 +1376,9 @@ function setupApp() {
             toggleDesktopSidebar(true);
           }
         } else {
-          // Mobile (<700px)
-          if (deltaX > 0 && touchStartX <= 40 && !modalMenu?.classList.contains('open')) {
-            // Swipe right from edge -> Open mobile drawer
+          // Folded mobile screen (<700px)
+          if (deltaX > 0 && !modalMenu?.classList.contains('open')) {
+            // Swipe right from anywhere on left side -> Open mobile drawer
             modalMenu?.classList.add('open');
           } else if (deltaX < 0 && modalMenu?.classList.contains('open')) {
             // Swipe left -> Close mobile drawer

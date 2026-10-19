@@ -323,25 +323,74 @@ export const OvulationModule: CalculatorModule = {
 };
 
 // ==========================================
-// 4. CURRENCY CONVERTER (CUR - Offline Capable)
 // ==========================================
-// Base: USD
-const CURRENCY_RATES: Record<string, number> = {
-  USD: 1.0,
-  INR: 84.1,
-  AED: 3.67,
-  SAR: 3.75,
-  QAR: 3.64,
-  KWD: 0.31,
-  GBP: 0.79,
-  EUR: 0.92,
-  SGD: 1.35,
-  CAD: 1.38,
-  AUD: 1.52,
-  JPY: 154.5,
-  CNY: 7.24,
-  CHF: 0.89
-};
+// 4. CURRENCY CONVERTER (CUR - Bidirectional with All Currencies Grid)
+// ==========================================
+export interface CurrencyDef {
+  code: string;
+  name: string;
+  symbol: string;
+  flag: string;
+  ratePerUSD: number;
+}
+
+export const CURRENCIES: CurrencyDef[] = [
+  { code: 'USD', name: 'US Dollar', symbol: '$', flag: '🇺🇸', ratePerUSD: 1.0 },
+  { code: 'INR', name: 'Indian Rupee', symbol: '₹', flag: '🇮🇳', ratePerUSD: 84.1 },
+  { code: 'AED', name: 'UAE Dirham', symbol: 'AED', flag: '🇦🇪', ratePerUSD: 3.67 },
+  { code: 'SAR', name: 'Saudi Riyal', symbol: 'SAR', flag: '🇸🇦', ratePerUSD: 3.75 },
+  { code: 'EUR', name: 'Euro', symbol: '€', flag: '🇪🇺', ratePerUSD: 0.92 },
+  { code: 'GBP', name: 'British Pound', symbol: '£', flag: '🇬🇧', ratePerUSD: 0.79 },
+  { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$', flag: '🇨🇦', ratePerUSD: 1.38 },
+  { code: 'AUD', name: 'Australian Dollar', symbol: 'A$', flag: '🇦🇺', ratePerUSD: 1.52 },
+  { code: 'SGD', name: 'Singapore Dollar', symbol: 'S$', flag: '🇸🇬', ratePerUSD: 1.35 },
+  { code: 'KWD', name: 'Kuwaiti Dinar', symbol: 'KD', flag: '🇰🇼', ratePerUSD: 0.31 },
+  { code: 'QAR', name: 'Qatari Riyal', symbol: 'QR', flag: '🇶🇦', ratePerUSD: 3.64 },
+  { code: 'OMR', name: 'Omani Rial', symbol: 'OMR', flag: '🇴🇲', ratePerUSD: 0.385 },
+  { code: 'BHD', name: 'Bahraini Dinar', symbol: 'BD', flag: '🇧🇭', ratePerUSD: 0.376 },
+  { code: 'JPY', name: 'Japanese Yen', symbol: '¥', flag: '🇯🇵', ratePerUSD: 154.5 },
+  { code: 'CNY', name: 'Chinese Yuan', symbol: '¥', flag: '🇨🇳', ratePerUSD: 7.24 },
+  { code: 'CHF', name: 'Swiss Franc', symbol: 'CHF', flag: '🇨🇭', ratePerUSD: 0.89 },
+  { code: 'MYR', name: 'Malaysian Ringgit', symbol: 'RM', flag: '🇲🇾', ratePerUSD: 4.45 },
+  { code: 'THB', name: 'Thai Baht', symbol: '฿', flag: '🇹🇭', ratePerUSD: 34.6 },
+  { code: 'NZD', name: 'New Zealand Dollar', symbol: 'NZ$', flag: '🇳🇿', ratePerUSD: 1.68 },
+  { code: 'ZAR', name: 'South African Rand', symbol: 'R', flag: '🇿🇦', ratePerUSD: 18.2 }
+];
+
+const CURRENCY_RATES: Record<string, number> = CURRENCIES.reduce((acc, c) => {
+  acc[c.code] = c.ratePerUSD;
+  return acc;
+}, {} as Record<string, number>);
+
+let memoryPinnedCurrencies: string[] | null = null;
+
+export function getPinnedCurrencies(): string[] {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      const raw = localStorage.getItem('everycalc-pinned-currencies');
+      if (raw) return JSON.parse(raw);
+    }
+  } catch {}
+  if (memoryPinnedCurrencies) return memoryPinnedCurrencies;
+  return ['USD', 'INR', 'AED', 'EUR', 'GBP'];
+}
+
+export function togglePinnedCurrency(code: string): string[] {
+  const current = getPinnedCurrencies();
+  let updated: string[];
+  if (current.includes(code)) {
+    updated = current.filter((c) => c !== code);
+  } else {
+    updated = [...current, code];
+  }
+  memoryPinnedCurrencies = updated;
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('everycalc-pinned-currencies', JSON.stringify(updated));
+    }
+  } catch {}
+  return updated;
+}
 
 export const CurrencyModule: CalculatorModule = {
   id: 'CUR',
@@ -353,11 +402,11 @@ export const CurrencyModule: CalculatorModule = {
         <div class="workspace-layout">
           <div class="workspace-inputs-pane">
             <div class="input-card">
-              <label class="input-label">From</label>
+              <label class="input-label" id="lbl-cur-from">From</label>
               <div class="input-row">
-                <input type="number" id="cur-amount" class="form-input" value="100" placeholder="100" step="any" inputmode="decimal" />
-                <select id="cur-from" class="form-select">
-                  ${Object.keys(CURRENCY_RATES).map((c) => `<option value="${c}" ${c === 'USD' ? 'selected' : ''}>${c}</option>`).join('')}
+                <input type="number" id="cur-amount-from" class="form-input" value="100" placeholder="0" step="any" inputmode="decimal" />
+                <select id="cur-select-from" class="form-select">
+                  ${CURRENCIES.map((c) => `<option value="${c.code}" ${c.code === 'USD' ? 'selected' : ''}>${c.flag} ${c.code} - ${c.name}</option>`).join('')}
                 </select>
               </div>
             </div>
@@ -369,47 +418,166 @@ export const CurrencyModule: CalculatorModule = {
 
           <div class="workspace-analytics-pane">
             <div class="input-card">
-              <label class="input-label">To (Converted)</label>
+              <label class="input-label" id="lbl-cur-to">To (Converted)</label>
               <div class="input-row">
-                <div id="cur-res-val" class="unit-res-display">0.00</div>
-                <select id="cur-to" class="form-select">
-                  ${Object.keys(CURRENCY_RATES).map((c) => `<option value="${c}" ${c === 'INR' ? 'selected' : ''}>${c}</option>`).join('')}
+                <input type="number" id="cur-amount-to" class="form-input" placeholder="0" step="any" inputmode="decimal" />
+                <select id="cur-select-to" class="form-select">
+                  ${CURRENCIES.map((c) => `<option value="${c.code}" ${c.code === 'INR' ? 'selected' : ''}>${c.flag} ${c.code} - ${c.name}</option>`).join('')}
                 </select>
               </div>
             </div>
+
+            <div id="cur-rate-banner" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); text-align: right; padding: 2px 8px;"></div>
           </div>
+        </div>
+
+        <!-- All Currencies Live Grid Section (Matching Unit Converter) -->
+        <div class="all-units-card" style="margin-top: 18px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+            <span style="font-size: 14.5px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+              <span>📊</span>
+              <span>All Currencies (${CURRENCIES.length})</span>
+            </span>
+            <small style="color: var(--text-secondary); font-size: 11.5px;">⭐ Tap star to pin to top • Tap card to select as target</small>
+          </div>
+          <div id="all-currencies-grid" class="all-units-grid"></div>
         </div>
       </div>
     `;
 
-    const inpAmt = container.querySelector('#cur-amount') as HTMLInputElement;
-    const selFrom = container.querySelector('#cur-from') as HTMLSelectElement;
-    const selTo = container.querySelector('#cur-to') as HTMLSelectElement;
-    const resVal = container.querySelector('#cur-res-val') as HTMLElement;
+    const inpFrom = container.querySelector('#cur-amount-from') as HTMLInputElement;
+    const inpTo = container.querySelector('#cur-amount-to') as HTMLInputElement;
+    const selFrom = container.querySelector('#cur-select-from') as HTMLSelectElement;
+    const selTo = container.querySelector('#cur-select-to') as HTMLSelectElement;
     const btnSwap = container.querySelector('#btn-swap-cur') as HTMLButtonElement;
+    const rateBanner = container.querySelector('#cur-rate-banner') as HTMLElement;
+    const allCurGrid = container.querySelector('#all-currencies-grid') as HTMLElement;
 
-    function rec() {
-      const amt = parseFloat(inpAmt.value) || 0;
+    let isUpdating = false;
+
+    function renderAllCurrencies() {
+      if (!allCurGrid) return;
+      const baseFromAmt = parseFloat(inpFrom.value) || 0;
+      const rFrom = CURRENCY_RATES[selFrom.value] || 1;
+      const usdValue = baseFromAmt / rFrom;
+
+      const pinnedList = getPinnedCurrencies();
+
+      const sorted = [...CURRENCIES].sort((a, b) => {
+        const aPinned = pinnedList.includes(a.code);
+        const bPinned = pinnedList.includes(b.code);
+        if (aPinned && !bPinned) return -1;
+        if (!aPinned && bPinned) return 1;
+        return 0;
+      });
+
+      allCurGrid.innerHTML = sorted
+        .map((c) => {
+          const converted = usdValue * c.ratePerUSD;
+          const isPinned = pinnedList.includes(c.code);
+          const isSelected = c.code === selTo.value;
+          return `
+            <div class="unit-grid-item ${isPinned ? 'pinned' : ''} ${isSelected ? 'active' : ''}" data-cur-code="${c.code}">
+              <div class="unit-grid-item-info">
+                <span class="unit-grid-item-name" style="display: flex; align-items: center; gap: 5px;">
+                  <span>${c.flag}</span>
+                  <span style="font-weight: 700;">${c.code}</span>
+                  <span style="color: var(--text-muted); font-size: 11px;">• ${c.name}</span>
+                </span>
+                <span class="unit-grid-item-val" style="font-size: 15px; font-weight: 700; color: var(--accent-color); margin-top: 2px;">
+                  ${c.symbol} ${formatLabelNumber(converted.toFixed(2))}
+                </span>
+              </div>
+              <button class="btn-pin-unit ${isPinned ? 'pinned' : ''}" data-pin-cur="${c.code}" title="${isPinned ? 'Unpin' : 'Pin to top'}">
+                ${isPinned ? '⭐' : '☆'}
+              </button>
+            </div>
+          `;
+        })
+        .join('');
+
+      allCurGrid.querySelectorAll('[data-pin-cur]').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const code = btn.getAttribute('data-pin-cur') || '';
+          togglePinnedCurrency(code);
+          renderAllCurrencies();
+        });
+      });
+
+      allCurGrid.querySelectorAll('[data-cur-code]').forEach((card) => {
+        card.addEventListener('click', () => {
+          const code = card.getAttribute('data-cur-code') || '';
+          if (code && code !== selTo.value) {
+            selTo.value = code;
+            recalcFromSource('from');
+          }
+        });
+      });
+    }
+
+    function updateRateBanner() {
+      if (!rateBanner) return;
       const rFrom = CURRENCY_RATES[selFrom.value] || 1;
       const rTo = CURRENCY_RATES[selTo.value] || 1;
+      const directRate = (1 / rFrom) * rTo;
+      const inverseRate = (1 / rTo) * rFrom;
+      rateBanner.textContent = `1 ${selFrom.value} = ${formatLabelNumber(directRate.toFixed(4))} ${selTo.value} • 1 ${selTo.value} = ${formatLabelNumber(inverseRate.toFixed(4))} ${selFrom.value}`;
+    }
 
-      // Amount in USD = amt / rFrom; Amount in Target = (amt / rFrom) * rTo
-      const converted = (amt / rFrom) * rTo;
-      const prefix = selTo.value === 'INR' ? '₹ ' : '';
-      resVal.textContent = `${prefix}${formatLabelNumber(converted.toFixed(2))} ${selTo.value}`;
+    function recalcFromSource(source: 'from' | 'to') {
+      if (isUpdating) return;
+      isUpdating = true;
+      try {
+        const rFrom = CURRENCY_RATES[selFrom.value] || 1;
+        const rTo = CURRENCY_RATES[selTo.value] || 1;
+
+        if (source === 'from') {
+          const val = inpFrom.value.trim();
+          if (val === '' || val === '-') {
+            inpTo.value = '';
+          } else {
+            const num = parseFloat(val) || 0;
+            const converted = (num / rFrom) * rTo;
+            inpTo.value = converted.toFixed(2).replace(/\.?0+$/, '');
+          }
+        } else {
+          const val = inpTo.value.trim();
+          if (val === '' || val === '-') {
+            inpFrom.value = '';
+          } else {
+            const num = parseFloat(val) || 0;
+            const converted = (num / rTo) * rFrom;
+            inpFrom.value = converted.toFixed(2).replace(/\.?0+$/, '');
+          }
+        }
+        updateRateBanner();
+        renderAllCurrencies();
+      } finally {
+        isUpdating = false;
+      }
     }
 
     btnSwap.addEventListener('click', () => {
-      const t = selFrom.value;
-      selFrom.value = selTo.value;
-      selTo.value = t;
-      rec();
+      const prevFrom = selFrom.value;
+      const prevTo = selTo.value;
+      const prevFromVal = inpFrom.value;
+      const prevToVal = inpTo.value;
+
+      selFrom.value = prevTo;
+      selTo.value = prevFrom;
+      inpFrom.value = prevToVal || prevFromVal;
+
+      recalcFromSource('from');
     });
 
-    inpAmt.addEventListener('input', rec);
-    selFrom.addEventListener('change', rec);
-    selTo.addEventListener('change', rec);
-    rec();
+    inpFrom.addEventListener('input', () => recalcFromSource('from'));
+    inpTo.addEventListener('input', () => recalcFromSource('to'));
+
+    selFrom.addEventListener('change', () => recalcFromSource('from'));
+    selTo.addEventListener('change', () => recalcFromSource('from'));
+
+    recalcFromSource('from');
   }
 };
 

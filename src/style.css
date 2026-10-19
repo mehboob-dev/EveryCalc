@@ -1928,19 +1928,35 @@ body {
 
   .desktop-shell.sidebar-collapsed .desktop-sidebar-header {
     justify-content: center;
-    padding: 10px 4px;
+    padding: 10px 0;
     gap: 0;
   }
 
   .desktop-shell.sidebar-collapsed .btn-sidebar-collapse {
-    margin: 0 auto;
+    margin: 0 auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
   .desktop-shell.sidebar-collapsed .desktop-sidebar-search {
-    padding: 6px 0;
-    margin: 8px 6px 4px;
-    justify-content: center;
+    width: 42px !important;
+    height: 42px !important;
+    padding: 0 !important;
+    margin: 8px auto 6px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    border-radius: 12px;
     cursor: pointer;
+  }
+
+  .desktop-shell.sidebar-collapsed .desktop-search-icon {
+    margin: 0 auto !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    font-size: 16px !important;
   }
 
   .desktop-shell.sidebar-collapsed .desktop-search-input {
@@ -1948,54 +1964,57 @@ body {
   }
 
   .desktop-shell.sidebar-collapsed .desktop-sidebar-list {
-    padding: 6px 4px 16px;
-    align-items: center;
+    width: 100% !important;
+    padding: 6px 0 16px !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
   }
 
   .desktop-shell.sidebar-collapsed .sidebar-item {
-    justify-content: center;
-    padding: 9px 0;
-    width: 44px;
-    border-radius: 12px;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 0 !important;
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    max-width: 42px !important;
+    margin: 3px auto !important;
+    gap: 0 !important;
+    border-radius: 12px !important;
+    box-sizing: border-box !important;
   }
 
   .desktop-shell.sidebar-collapsed .sidebar-item-icon {
-    font-size: 18px;
-    width: auto;
-    margin: 0;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 auto !important;
+    font-size: 20px !important;
+    line-height: 1 !important;
+    text-align: center !important;
   }
 
   .desktop-shell.sidebar-collapsed .sidebar-item-name {
-    display: none;
+    display: none !important;
   }
 
   .desktop-shell.sidebar-collapsed .btn-star-fav {
-    display: none;
+    display: none !important;
   }
 
   .desktop-shell.sidebar-collapsed .sidebar-cat-header,
   .desktop-shell.sidebar-collapsed .sidebar-category-label,
   .desktop-shell.sidebar-collapsed .desktop-sidebar .drawer-category-header {
-    width: 32px !important;
-    height: 1px !important;
-    min-height: 1px !important;
-    max-height: 1px !important;
-    background-color: var(--border-color) !important;
-    margin: 8px auto 4px !important;
-    padding: 0 !important;
-    font-size: 0 !important;
-    line-height: 0 !important;
-    overflow: hidden !important;
-    opacity: 0.5 !important;
-    border: none !important;
-    display: block !important;
-    box-sizing: border-box !important;
-  }
-
-  .desktop-shell.sidebar-collapsed .sidebar-cat-header:first-child,
-  .desktop-shell.sidebar-collapsed .sidebar-category-label:first-child,
-  .desktop-shell.sidebar-collapsed .desktop-sidebar .drawer-category-header:first-child {
     display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    max-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
   }
 
   .desktop-shell.sidebar-collapsed .sidebar-cat-header *,
