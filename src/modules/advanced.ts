@@ -736,7 +736,7 @@ export const TimezoneModule: CalculatorModule = {
               <span id="tmz-scrubbed-time-label" style="font-weight: 700; color: var(--accent-color, #ff9f0a);">Live Time</span>
             </div>
             <input type="range" id="tmz-slider" class="tmz-slider" min="0" max="1439" step="15" value="720" />
-            <div style="display: flex; justify-content: space-between; font-size: 10.5px; color: var(--text-secondary); opacity: 0.7;">
+            <div style="display: flex; justify-content: space-between; font-size: 10.5px; color: var(--text-secondary);">
               <span>12:00 AM</span>
               <span>06:00 AM</span>
               <span>12:00 PM</span>

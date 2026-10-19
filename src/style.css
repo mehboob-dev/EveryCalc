@@ -4,11 +4,12 @@
   --bg-surface: #202431;
   --text-primary: #ffffff;
   --text-secondary: #9aa1b3;
+  --text-muted: #8c94a6;
   --btn-num-bg: #262a37;
   --btn-num-text: #f0f2f8;
   --btn-func-bg: #303648;
-  --btn-func-text: #82aaff;
-  --btn-op-bg: linear-gradient(145deg, #ff9f1c, #f77f00);
+  --btn-func-text: #9ec2ff;
+  --btn-op-bg: linear-gradient(145deg, #c2410c, #9a3412);
   --btn-op-text: #ffffff;
   --accent-color: #3b82f6;
   --success-color: #10b981;
@@ -32,17 +33,19 @@
   --bg-primary: #e6ebf2;
   --bg-secondary: #dce2ec;
   --bg-surface: #f0f4f9;
-  --text-primary: #191c24;
-  --text-secondary: #656d81;
+  --text-primary: #111827;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
   --btn-num-bg: #ffffff;
-  --btn-num-text: #191c24;
+  --btn-num-text: #111827;
   --btn-func-bg: #dce4f0;
-  --btn-func-text: #2563eb;
-  --btn-op-bg: linear-gradient(145deg, #ff9f1c, #f77f00);
+  --btn-func-text: #1d4ed8;
+  --btn-op-bg: linear-gradient(145deg, #c2410c, #9a3412);
   --btn-op-text: #ffffff;
-  --accent-color: #2563eb;
-  --success-color: #10b981;
-  --border-color: rgba(0, 0, 0, 0.06);
+  --accent-color: #1d4ed8;
+  --success-color: #065f46;
+  --danger-color: #b91c1c;
+  --border-color: rgba(0, 0, 0, 0.08);
 
   --clay-card-drop: 6px 9px 18px rgba(155, 170, 190, 0.45);
   --clay-card-light: inset 2px 2px 4px rgba(255, 255, 255, 0.95);
@@ -62,6 +65,11 @@
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
+}
+
+::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.95;
 }
 
 body {
@@ -374,11 +382,11 @@ body {
   background: var(--btn-op-bg);
   color: var(--btn-op-text);
   font-size: 28px;
-  box-shadow: 4px 6px 14px rgba(247, 127, 0, 0.45), inset 2px 2px 4px rgba(255, 255, 255, 0.35), inset -3px -3px 5px rgba(180, 60, 0, 0.45);
+  box-shadow: 4px 6px 14px rgba(194, 65, 12, 0.45), inset 2px 2px 4px rgba(255, 255, 255, 0.35), inset -3px -3px 5px rgba(130, 40, 0, 0.45);
 }
 
 .calc-btn.btn-op:active {
-  box-shadow: 2px 2px 5px rgba(247, 127, 0, 0.4), inset 3px 3px 5px rgba(180, 60, 0, 0.6), inset -1px -1px 2px rgba(255, 255, 255, 0.2);
+  box-shadow: 2px 2px 5px rgba(194, 65, 12, 0.4), inset 3px 3px 5px rgba(130, 40, 0, 0.6), inset -1px -1px 2px rgba(255, 255, 255, 0.2);
 }
 
 /* Modal Overlays & Drawers */
@@ -1537,7 +1545,6 @@ body {
 .drawer-drag-handle {
   font-size: 15px;
   color: var(--text-secondary);
-  opacity: 0.55;
   cursor: grab;
   padding: 4px 6px;
   border-radius: 6px;
@@ -2359,7 +2366,7 @@ body {
 
   .desktop-sidebar-search .search-icon {
     font-size: 12px;
-    opacity: 0.6;
+    color: var(--text-secondary);
   }
 
   .desktop-search-input {
