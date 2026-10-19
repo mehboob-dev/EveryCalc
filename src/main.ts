@@ -1,4 +1,5 @@
 import { formatNumber, formatExpressionGrouping, getIndianWords } from './core/math.ts';
+import { shareText, formatShareCalculation } from './core/share.ts';
 import { evaluateExpression } from './core/evaluator.ts';
 import { EXTENDED_CONSTANTS } from './core/constants.ts';
 import { getHistory, addHistory, clearHistory, HistoryItem } from './core/history.ts';
@@ -200,7 +201,7 @@ function updateDisplay() {
           html += '<span class="calc-cursor"></span>';
         }
         const ch = state.formula[i];
-        const displayChar = ch === ' ' ? '&nbsp;' : ch;
+        const displayChar = ch === ' ' ? ' ' : ch;
         html += `<span class="char-token" data-idx="${i}">${displayChar}</span>`;
       }
       if (state.cursorPos >= state.formula.length) {
@@ -209,25 +210,21 @@ function updateDisplay() {
       displayMain.innerHTML = html;
     }
 
-    // Dynamic font scaling to keep long numbers and formulas on screen
+    // Dynamic font scaling: auto-shrink from 42px to 30px, then 24px floor before wrapping
     const rawLen = (displayMain.textContent || '').length;
-    displayMain.classList.remove('len-compact', 'len-small', 'len-tiny', 'len-micro');
-    if (rawLen > 22) {
-      displayMain.classList.add('len-micro');
-    } else if (rawLen > 16) {
-      displayMain.classList.add('len-tiny');
-    } else if (rawLen > 12) {
-      displayMain.classList.add('len-small');
-    } else if (rawLen > 9) {
+    displayMain.classList.remove('len-compact', 'len-floor');
+    if (rawLen > 20) {
+      displayMain.classList.add('len-floor');
+    } else if (rawLen > 11) {
       displayMain.classList.add('len-compact');
     }
 
-    // Auto-scroll to keep active cursor or latest typed digits in view
+    // Auto-scroll vertically to keep active cursor or latest typed digits in view
     const cursor = displayMain.querySelector('.calc-cursor') as HTMLElement;
     if (cursor) {
-      cursor.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
+      cursor.scrollIntoView({ block: 'nearest', behavior: 'auto' });
     } else {
-      displayMain.scrollLeft = displayMain.scrollWidth;
+      displayMain.scrollTop = displayMain.scrollHeight;
     }
   }
 
@@ -238,7 +235,7 @@ function updateDisplay() {
   if (displayExpr) {
     displayExpr.textContent = state.expression;
     if (state.expression) {
-      displayExpr.scrollLeft = displayExpr.scrollWidth;
+      displayExpr.scrollTop = displayExpr.scrollHeight;
     }
   }
 
@@ -483,18 +480,57 @@ function showToast(message: string): void {
 
 function copyCurrentResult(): void {
   const textToCopy = state.isResultDisplayed
-    ? state.currentNumber
-    : state.currentNumber !== '0'
-      ? state.currentNumber
-      : state.livePreview || '0';
+    ? state.formula
+    : state.formula !== '0'
+      ? state.formula
+      : state.livePreview.replace(/^=\s*/, '') || '0';
   if (navigator.clipboard) {
     navigator.clipboard
-      .writeText(textToCopy)
+      .writeText(textToCopy.replace(/,/g, ''))
       .then(() => {
         showToast(t('copiedToClipboard', { value: formatNumber(textToCopy) }));
       })
       .catch(() => {});
   }
+}
+
+function shareCalculationItem(expr: string, result: string): void {
+  const text = formatShareCalculation(expr, result);
+  shareText(text, 'Calculation');
+}
+
+function shareGeneralCalculation(): void {
+  let expr = '';
+  let result = '';
+
+  if (state.isResultDisplayed) {
+    result = state.formula;
+    expr = state.expression.replace(/=$/, '').trim();
+  } else {
+    const raw = state.formula.trim();
+    if (raw && raw !== '0' && raw !== 'Error') {
+      const res = evaluateExpression(raw, userSettings.angleMode);
+      if (res.success && res.value !== raw) {
+        expr = raw;
+        result = res.value;
+      } else {
+        result = raw;
+      }
+    } else {
+      const historyItems = getHistory();
+      if (historyItems && historyItems.length > 0) {
+        expr = historyItems[0].expression;
+        result = historyItems[0].result;
+      }
+    }
+  }
+
+  if (!result || result === 'Error' || (result === '0' && !expr)) {
+    showToast('No calculation to share');
+    return;
+  }
+
+  shareCalculationItem(expr, result);
 }
 
 function flashButton(selector: string): void {
@@ -521,24 +557,44 @@ function renderHistoryList() {
 
     container.innerHTML = items
       .map(
-        (item: HistoryItem) => `
-        <div class="history-item" data-res="${item.result}" title="Click to use ${item.result}">
-          <div class="history-expr">${item.expression} =</div>
-          <div class="history-res">${formatNumber(item.result)}</div>
+        (item: HistoryItem, idx: number) => `
+        <div class="history-item" data-res="${item.result}" data-idx="${idx}" title="Click to use ${item.result}">
+          <div class="history-item-content">
+            <div class="history-expr">${item.expression} =</div>
+            <div class="history-res">${formatNumber(item.result)}</div>
+          </div>
+          <button class="btn-history-share" data-idx="${idx}" title="Share on WhatsApp" aria-label="Share on WhatsApp">💬</button>
         </div>
       `
       )
       .join('');
 
     container.querySelectorAll('.history-item').forEach((el) => {
-      el.addEventListener('click', () => {
+      el.addEventListener('click', (e) => {
+        if ((e.target as HTMLElement).closest('.btn-history-share')) {
+          return;
+        }
         const resVal = el.getAttribute('data-res');
         if (resVal) {
-          state.currentNumber = resVal;
+          state.formula = resVal;
+          state.cursorPos = state.formula.length;
           state.isResultDisplayed = true;
           updateDisplay();
           triggerHaptic();
           document.getElementById('modal-history')?.classList.remove('open');
+        }
+      });
+    });
+
+    container.querySelectorAll('.btn-history-share').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const idxStr = btn.getAttribute('data-idx');
+        if (idxStr !== null) {
+          const item = items[parseInt(idxStr, 10)];
+          if (item) {
+            shareCalculationItem(item.expression, item.result);
+          }
         }
       });
     });
@@ -558,6 +614,7 @@ function switchMode(modeId: string, modeName?: string) {
   const generalView = document.getElementById('view-general');
   const moduleView = document.getElementById('view-module');
   const btnHistory = document.getElementById('btn-history');
+  const btnShareCalc = document.getElementById('btn-share-calc');
 
   document.getElementById('modal-menu')?.classList.remove('open');
   document.querySelectorAll('.drawer-item, .sidebar-item').forEach((el) => {
@@ -572,6 +629,7 @@ function switchMode(modeId: string, modeName?: string) {
     if (generalView) generalView.style.display = '';
     if (moduleView) moduleView.style.display = 'none';
     if (btnHistory) btnHistory.style.display = '';
+    if (btnShareCalc) btnShareCalc.style.display = '';
     updateDisplay();
     renderHistoryList();
   } else {
@@ -584,6 +642,7 @@ function switchMode(modeId: string, modeName?: string) {
       }
     }
     if (btnHistory) btnHistory.style.display = 'none';
+    if (btnShareCalc) btnShareCalc.style.display = 'none';
   }
 }
 
@@ -720,6 +779,7 @@ function setupApp() {
             <span id="header-title" class="calc-title">${state.activeCalculatorName}</span>
           </div>
           <div class="calc-actions">
+            <button id="btn-share-calc" class="btn-icon" aria-label="Share on WhatsApp" title="Share on WhatsApp">💬</button>
             <button id="btn-lang" class="btn-icon" aria-label="Language / Idioma" title="Language / Idioma">🌐</button>
             <button id="btn-history" class="btn-icon" aria-label="History">🕒</button>
             <button id="btn-settings" class="btn-icon" aria-label="Settings">⚙️</button>
@@ -1629,6 +1689,11 @@ function setupApp() {
   });
 
   renderLanguageOptions();
+
+  const btnShareCalc = document.getElementById('btn-share-calc');
+  btnShareCalc?.addEventListener('click', () => {
+    shareGeneralCalculation();
+  });
 
   const btnLang = document.getElementById('btn-lang');
   btnLang?.addEventListener('click', () => {

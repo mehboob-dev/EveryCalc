@@ -203,62 +203,82 @@ body {
   background-color: var(--bg-secondary);
   border-radius: 20px;
   box-shadow: var(--clay-inset);
-  word-break: break-all;
   overflow: hidden;
   box-sizing: border-box;
+  position: relative;
 }
 
 .display-expression {
-  font-size: clamp(14px, 4.2vw, 18px);
+  font-size: clamp(13px, 3.8vw, 16px);
   color: var(--text-secondary);
-  min-height: 20px;
+  min-height: 18px;
   margin-bottom: 2px;
   text-align: right;
   width: 100%;
   max-width: 100%;
-  overflow-x: auto;
-  white-space: nowrap;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: 38px;
   scrollbar-width: none;
-  touch-action: pan-x;
+  touch-action: pan-y;
+  margin-top: auto;
 }
 
 .display-expression::-webkit-scrollbar {
   display: none;
 }
 
+.display-expression:empty {
+  min-height: 0 !important;
+  margin-bottom: 0 !important;
+  padding: 0 !important;
+}
+
 .display-main {
-  font-size: clamp(28px, 8.5vw, 44px);
+  font-size: clamp(28px, 8vw, 42px);
   font-weight: 600;
-  line-height: 1.15;
+  line-height: 1.25;
   letter-spacing: -0.5px;
   text-align: right;
   width: 100%;
   max-width: 100%;
-  overflow-x: auto;
-  white-space: nowrap;
-  scrollbar-width: none;
-  touch-action: pan-x;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  overflow-x: hidden;
+  overflow-y: auto;
+  max-height: 100%;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(150, 150, 150, 0.35) transparent;
+  touch-action: pan-y;
   transition: font-size 0.12s ease;
+  overscroll-behavior: contain;
 }
 
 .calc-display .display-main.len-compact {
-  font-size: clamp(22px, 6.5vw, 34px);
+  font-size: clamp(22px, 6vw, 30px);
+  line-height: 1.28;
 }
 
-.calc-display .display-main.len-small {
-  font-size: clamp(18px, 5.2vw, 28px);
-}
-
-.calc-display .display-main.len-tiny {
-  font-size: clamp(15px, 4.2vw, 22px);
-}
-
-.calc-display .display-main.len-micro {
-  font-size: clamp(13px, 3.5vw, 18px);
+.calc-display .display-main.len-floor {
+  font-size: clamp(18px, 4.8vw, 24px);
+  line-height: 1.32;
 }
 
 .display-main::-webkit-scrollbar {
-  display: none;
+  width: 4px;
+}
+
+.display-main::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.display-main::-webkit-scrollbar-thumb {
+  background-color: rgba(150, 150, 150, 0.35);
+  border-radius: 4px;
 }
 
 .display-words {
@@ -469,7 +489,7 @@ body {
 }
 
 .char-token {
-  display: inline-block;
+  display: inline;
   cursor: pointer;
   user-select: none;
   padding: 0 0.5px;
@@ -1651,7 +1671,11 @@ body {
 
 /* History Tape Card Styles */
 .history-item {
-  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
   margin: 10px 14px;
   border-radius: 18px;
   background-color: var(--bg-surface);
@@ -1663,6 +1687,11 @@ body {
 .history-item:active {
   transform: translateY(2px) scale(0.97);
   box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4), var(--clay-inset);
+}
+
+.history-item-content {
+  flex: 1;
+  min-width: 0;
 }
 
 .history-expr {
@@ -1677,6 +1706,32 @@ body {
   font-weight: 700;
   color: var(--text-primary);
   word-break: break-all;
+}
+
+.btn-history-share {
+  background: var(--bg-primary);
+  border: none;
+  font-size: 15px;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-primary);
+  box-shadow: var(--clay-btn-drop), var(--clay-btn-light), var(--clay-btn-dark);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  flex-shrink: 0;
+}
+
+.btn-history-share:hover {
+  transform: scale(1.08);
+}
+
+.btn-history-share:active {
+  transform: translateY(1px) scale(0.95);
+  box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3), var(--clay-inset);
 }
 
 .history-empty {
