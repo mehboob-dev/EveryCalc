@@ -533,15 +533,6 @@ function refreshActiveAdSlots(): void {
       desktopSidebarAd.appendChild(adContainer);
     }
   }
-
-  const drawerMenuAd = document.getElementById('drawer-menu-ad');
-  if (drawerMenuAd) {
-    drawerMenuAd.innerHTML = '';
-    const adContainer = createAdSenseContainer('bottom-sticky');
-    if (adContainer) {
-      drawerMenuAd.appendChild(adContainer);
-    }
-  }
 }
 
 function setupKeyboard(): void {
@@ -779,7 +770,6 @@ function setupApp() {
           <button id="btn-close-menu" class="btn-icon">✕</button>
         </div>
         <div class="drawer-list" id="drawer-list"></div>
-        <div id="drawer-menu-ad" class="drawer-menu-ad-container"></div>
       </div>
     </div>
 
