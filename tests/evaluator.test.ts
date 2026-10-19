@@ -1,5 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { calculate, formatNumber, formatIndianNumber, getIndianWords, appendNumberInput } from '../src/core/math.ts';
+import {
+  calculate,
+  formatNumber,
+  formatIndianNumber,
+  getIndianWords,
+  appendNumberInput,
+  numberToIndianWords,
+  formatTenureYears,
+  formatTenureMonths
+} from '../src/core/math.ts';
 import { evaluateExpression, tokenize, infixToRPN } from '../src/core/evaluator.ts';
 
 describe('Keypad Input Handling (0 and 00)', () => {
@@ -95,6 +104,26 @@ describe('Core Math Calculations (Decimal.js)', () => {
     expect(getIndianWords('12500000')).toBe('≈ ₹ 1.25 Crore');
     expect(getIndianWords('25000')).toBe('≈ ₹ 25 Thousand');
     expect(getIndianWords('500')).toBe('');
+  });
+
+  it('converts numbers and comma-separated amounts to Indian currency words', () => {
+    expect(numberToIndianWords('5000000')).toBe('Fifty Lakh Rupees');
+    expect(numberToIndianWords('50,00,000')).toBe('Fifty Lakh Rupees');
+    expect(numberToIndianWords('10000000')).toBe('One Crore Rupees');
+    expect(numberToIndianWords('1,00,00,000')).toBe('One Crore Rupees');
+    expect(numberToIndianWords('25000')).toBe('Twenty Five Thousand Rupees');
+    expect(numberToIndianWords('100000')).toBe('One Lakh Rupees');
+    expect(numberToIndianWords('0')).toBe('');
+  });
+
+  it('formats tenure in dual years and months format', () => {
+    expect(formatTenureYears(10)).toBe('10 Years (120 Months)');
+    expect(formatTenureYears(1)).toBe('1 Year (12 Months)');
+    expect(formatTenureYears('20')).toBe('20 Years (240 Months)');
+    expect(formatTenureMonths(240)).toBe('20 Years (240 Months)');
+    expect(formatTenureMonths(6)).toBe('6 Months (0.5 Years)');
+    expect(formatTenureMonths(12)).toBe('1 Year (12 Months)');
+    expect(formatTenureMonths(0)).toBe('');
   });
 });
 

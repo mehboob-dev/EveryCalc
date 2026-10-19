@@ -352,6 +352,11 @@ body {
   color: var(--text-primary);
 }
 
+.btn-sub.btn-cursor-step {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
 .btn-sub:active {
   transform: translateY(2px) scale(0.95);
   box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4), var(--clay-inset);

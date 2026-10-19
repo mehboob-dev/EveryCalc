@@ -15,9 +15,13 @@ export function calculateTip(
   peopleCount: string | number = 1
 ): TipCalculation {
   try {
-    const bill = new Decimal(billAmount !== undefined && billAmount !== null ? billAmount.toString().replace(/,/g, '') : 0);
-    const tipPct = new Decimal(tipPercent || 0);
-    let people = new Decimal(peopleCount || 1);
+    const cleanBill = String(billAmount !== undefined && billAmount !== null ? billAmount : 0).replace(/,/g, '');
+    const cleanTip = String(tipPercent || 0).replace(/,/g, '');
+    const cleanPeople = String(peopleCount || 1).replace(/,/g, '');
+
+    const bill = new Decimal(cleanBill || 0);
+    const tipPct = new Decimal(cleanTip || 0);
+    let people = new Decimal(cleanPeople || 1);
     if (people.lessThanOrEqualTo(0)) people = new Decimal(1);
 
     const tip = bill.times(tipPct.dividedBy(100));
@@ -111,11 +115,18 @@ export const TipModule: CalculatorModule = {
 
     function recalculate() {
       const res = calculateTip(billInput.value, percentInput.value, peopleInput.value);
-      if (resTip) resTip.textContent = formatNumber(res.tipAmount);
-      if (resTotal) resTotal.textContent = formatNumber(res.totalPayable);
-      if (resTipPerson) resTipPerson.textContent = formatNumber(res.tipPerPerson);
-      if (resTotalPerson) resTotalPerson.textContent = formatNumber(res.totalPerPerson);
+      if (resTip) resTip.textContent = formatNumber(res.tipAmount, { section: 'finance' });
+      if (resTotal) resTotal.textContent = formatNumber(res.totalPayable, { section: 'finance' });
+      if (resTipPerson) resTipPerson.textContent = formatNumber(res.tipPerPerson, { section: 'finance' });
+      if (resTotalPerson) resTotalPerson.textContent = formatNumber(res.totalPerPerson, { section: 'finance' });
     }
+
+    billInput.addEventListener('blur', () => {
+      const clean = billInput.value.replace(/,/g, '').trim();
+      if (clean && !isNaN(Number(clean))) {
+        billInput.value = formatNumber(clean, { section: 'finance' });
+      }
+    });
 
     function syncTipPresets(val: string) {
       container.querySelectorAll('.btn-preset').forEach((b) => {

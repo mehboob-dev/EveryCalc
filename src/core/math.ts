@@ -98,12 +98,66 @@ export function formatIndianNumber(val: string): string {
   return isNegative ? `-${result}` : result;
 }
 
+const ONES = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
+  'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+const TENS = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+function convertUnderThousand(n: number): string {
+  let str = '';
+  if (n >= 100) {
+    str += ONES[Math.floor(n / 100)] + ' Hundred ';
+    n %= 100;
+  }
+  if (n >= 20) {
+    str += TENS[Math.floor(n / 10)] + (n % 10 > 0 ? ' ' + ONES[n % 10] : '');
+  } else if (n > 0) {
+    str += ONES[n];
+  }
+  return str.trim();
+}
+
+/**
+ * Converts a number to Indian English words (Lakhs, Crores, Thousands, Rupees)
+ */
+export function numberToIndianWords(val: string | number): string {
+  try {
+    const cleanStr = String(val).replace(/,/g, '').trim();
+    if (!cleanStr) return '';
+    const num = Math.floor(Math.abs(Number(cleanStr)));
+    if (isNaN(num) || num <= 0) return '';
+    if (num > 9999999999) {
+      const cr = (num / 10000000).toFixed(2).replace(/\.?0+$/, '');
+      return `₹ ${cr} Crore Rupees`;
+    }
+
+    const crore = Math.floor(num / 10000000);
+    let remainder = num % 10000000;
+    const lakh = Math.floor(remainder / 100000);
+    remainder = remainder % 100000;
+    const thousand = Math.floor(remainder / 1000);
+    const hundred = remainder % 1000;
+
+    const parts: string[] = [];
+    if (crore > 0) parts.push(`${convertUnderThousand(crore)} Crore`);
+    if (lakh > 0) parts.push(`${convertUnderThousand(lakh)} Lakh`);
+    if (thousand > 0) parts.push(`${convertUnderThousand(thousand)} Thousand`);
+    if (hundred > 0) parts.push(convertUnderThousand(hundred));
+
+    const words = parts.join(' ').trim();
+    return words ? `${words} Rupees` : '';
+  } catch {
+    return '';
+  }
+}
+
 /**
  * Returns Indian denomination representation (Thousand, Lakh, Crore)
  */
 export function getIndianWords(val: string): string {
   try {
-    const d = new Decimal(val).abs();
+    const cleanStr = String(val).replace(/,/g, '').trim();
+    if (!cleanStr) return '';
+    const d = new Decimal(cleanStr).abs();
     if (d.lessThan(1000)) return '';
     if (d.greaterThanOrEqualTo(10000000)) {
       const cr = d.dividedBy(10000000);
@@ -124,6 +178,32 @@ export function getIndianWords(val: string): string {
     return '';
   }
   return '';
+}
+
+/**
+ * Formats tenure in years to dual format: "X Years (Y Months)"
+ */
+export function formatTenureYears(years: number | string): string {
+  const y = parseFloat(String(years));
+  if (isNaN(y) || y <= 0) return '';
+  const months = Math.round(y * 12);
+  const yrLabel = y === 1 ? '1 Year' : `${y} Years`;
+  return `${yrLabel} (${months} Months)`;
+}
+
+/**
+ * Formats tenure in months to dual format: "X Years (Y Months)" or "M Months"
+ */
+export function formatTenureMonths(months: number | string): string {
+  const m = parseInt(String(months), 10);
+  if (isNaN(m) || m <= 0) return '';
+  if (m < 12) {
+    const yrFraction = (m / 12).toFixed(1).replace(/\.0$/, '');
+    return `${m} Months (${yrFraction} Years)`;
+  }
+  const yrs = (m / 12).toFixed(1).replace(/\.0$/, '');
+  const yrLabel = yrs === '1' ? '1 Year' : `${yrs} Years`;
+  return `${yrLabel} (${m} Months)`;
 }
 
 import { formatNumber as coreFormatNumber, formatLabelNumber as coreFormatLabelNumber, formatExpressionGrouping, attachCommaFormatter, formatInputValue, FormatOptions } from './format.ts';

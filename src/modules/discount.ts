@@ -17,10 +17,15 @@ export function calculateDiscount(
   taxPercent: string | number = 0
 ): DiscountCalculation {
   try {
-    const p = new Decimal(originalPrice !== undefined && originalPrice !== null ? originalPrice.toString().replace(/,/g, '') : 0);
-    const d1 = new Decimal(discountPercent || 0);
-    const d2 = new Decimal(additionalDiscount || 0);
-    const t = new Decimal(taxPercent || 0);
+    const cleanPrice = String(originalPrice !== undefined && originalPrice !== null ? originalPrice : 0).replace(/,/g, '').trim();
+    const cleanDiscount = String(discountPercent || 0).replace(/,/g, '').trim();
+    const cleanAdd = String(additionalDiscount || 0).replace(/,/g, '').trim();
+    const cleanTax = String(taxPercent || 0).replace(/,/g, '').trim();
+
+    const p = new Decimal(cleanPrice || 0);
+    const d1 = new Decimal(cleanDiscount || 0);
+    const d2 = new Decimal(cleanAdd || 0);
+    const t = new Decimal(cleanTax || 0);
 
     const priceAfterD1 = p.times(new Decimal(1).minus(d1.dividedBy(100)));
     const priceAfterD2 = priceAfterD1.times(new Decimal(1).minus(d2.dividedBy(100)));
@@ -112,9 +117,9 @@ export const DiscountModule: CalculatorModule = {
         addDiscountInput.value,
         taxInput.value
       );
-      if (resFinal) resFinal.textContent = formatNumber(res.finalPrice);
-      if (resSavings) resSavings.textContent = formatNumber(res.totalSavings);
-      if (resTax) resTax.textContent = formatNumber(res.taxAmount);
+      if (resFinal) resFinal.textContent = formatNumber(res.finalPrice, { section: 'finance' });
+      if (resSavings) resSavings.textContent = formatNumber(res.totalSavings, { section: 'finance' });
+      if (resTax) resTax.textContent = formatNumber(res.taxAmount, { section: 'finance' });
     }
 
     attachCommaFormatter(priceInput, () => recalculate());

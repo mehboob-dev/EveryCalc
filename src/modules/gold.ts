@@ -1,7 +1,8 @@
 import Decimal from 'decimal.js';
 import { CalculatorModule } from './types.ts';
-import { formatNumber, formatLabelNumber, attachCommaFormatter, formatInputValue } from '../core/math.ts';
+import { formatNumber, formatLabelNumber, attachCommaFormatter, formatInputValue, numberToIndianWords } from '../core/math.ts';
 import { shareText } from '../core/share.ts';
+import { createAffiliateCardElement } from '../core/monetization/engine.ts';
 
 export type GoldPurity =
   | '24K'
@@ -177,9 +178,13 @@ export function calculateGoldPrice(
   options: GoldCalculationOptions = {}
 ): GoldCalculationResult {
   try {
-    const rawWeight = new Decimal(weight !== undefined && weight !== null ? weight.toString().replace(/,/g, '') : 0);
-    const rawRate = new Decimal(rate !== undefined && rate !== null ? rate.toString().replace(/,/g, '') : 0);
-    const chargeVal = new Decimal(makingChargeVal !== undefined && makingChargeVal !== null ? makingChargeVal.toString().replace(/,/g, '') : 0);
+    const cleanWeight = String(weight !== undefined && weight !== null ? weight : 0).replace(/,/g, '');
+    const cleanRate = String(rate !== undefined && rate !== null ? rate : 0).replace(/,/g, '');
+    const cleanChargeVal = String(makingChargeVal !== undefined && makingChargeVal !== null ? makingChargeVal : 0).replace(/,/g, '');
+
+    const rawWeight = new Decimal(cleanWeight || 0);
+    const rawRate = new Decimal(cleanRate || 0);
+    const chargeVal = new Decimal(cleanChargeVal || 0);
     const rateUnit: RateUnit = options.rateUnit || 'PER_10G';
     const includeHallmark = options.includeHallmark ?? false;
 
@@ -334,6 +339,7 @@ export const GoldModule: CalculatorModule = {
                 <!-- Rate Presets -->
                 <div class="tip-preset-row" id="gld-rate-presets" style="margin-bottom: 8px;"></div>
                 <input type="text" id="gld-rate" class="form-input" value="78,000" placeholder="78,000" inputmode="decimal" />
+                <div id="gld-rate-words" class="input-words-hint"></div>
                 <div id="rate-explanation" style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;"></div>
               </div>
 
@@ -418,6 +424,9 @@ export const GoldModule: CalculatorModule = {
                 </button>
               </div>
             </div>
+
+            <!-- Contextual Gold / Bullion Affiliate Slot -->
+            <div id="slot-affiliate-gld"></div>
           </div>
         </div>
       </div>
@@ -430,6 +439,7 @@ export const GoldModule: CalculatorModule = {
 
     const inpWeight = container.querySelector('#gld-weight') as HTMLInputElement;
     const inpRate = container.querySelector('#gld-rate') as HTMLInputElement;
+    const inpRateWords = container.querySelector('#gld-rate-words') as HTMLElement;
     const inpMc = container.querySelector('#gld-mc') as HTMLInputElement;
     const btnToggleHallmark = container.querySelector('#btn-toggle-hallmark') as HTMLButtonElement;
 
@@ -520,11 +530,16 @@ export const GoldModule: CalculatorModule = {
     }
 
     function rec() {
+      const cleanRate = inpRate.value.replace(/,/g, '');
+      if (inpRateWords) {
+        inpRateWords.textContent = numberToIndianWords(cleanRate);
+      }
+
       const res = calculateGoldPrice(
         inpWeight.value,
         unit,
         currentPurity.id,
-        inpRate.value,
+        cleanRate,
         inpMc.value,
         chargeType,
         {
@@ -537,22 +552,22 @@ export const GoldModule: CalculatorModule = {
       resKarat.textContent = `${res.purityKarat} • ${res.purityPct}`;
       resRateG.textContent = `₹ ${formatLabelNumber(res.goldRatePerGram)} / g`;
       resWeight.textContent = `${res.weightInGrams} g`;
-      resGoldVal.textContent = `₹ ${formatNumber(res.goldValue)}`;
-      resMc.textContent = `₹ ${formatNumber(res.makingChargeAmount)}`;
-      resSubtotal.textContent = `₹ ${formatNumber(res.subtotal)}`;
-      resGst.textContent = `₹ ${formatNumber(res.gstAmount)}`;
-      resTotal.textContent = `₹ ${formatNumber(res.totalPayable)}`;
+      resGoldVal.textContent = `₹ ${formatNumber(res.goldValue, { section: 'finance' })}`;
+      resMc.textContent = `₹ ${formatNumber(res.makingChargeAmount, { section: 'finance' })}`;
+      resSubtotal.textContent = `₹ ${formatNumber(res.subtotal, { section: 'finance' })}`;
+      resGst.textContent = `₹ ${formatNumber(res.gstAmount, { section: 'finance' })}`;
+      resTotal.textContent = `₹ ${formatNumber(res.totalPayable, { section: 'finance' })}`;
 
       // Hallmark visibility
       if (includeHallmark) {
         rowHallmark.style.display = 'flex';
-        resHallmark.textContent = `₹ ${res.hallmarkAmount}`;
+        resHallmark.textContent = `₹ ${formatNumber(res.hallmarkAmount, { section: 'finance' })}`;
       } else {
         rowHallmark.style.display = 'none';
       }
 
       // Live formula text
-      formulaText.textContent = `${res.weightInGrams}g @ ₹${formatLabelNumber(res.goldRatePerGram)}/g = ₹${formatNumber(res.goldValue)} + Making ₹${formatNumber(res.makingChargeAmount)} + 3% GST (₹${formatNumber(res.gstAmount)}) = ₹${formatNumber(res.totalPayable)}`;
+      formulaText.textContent = `${res.weightInGrams}g @ ₹${formatLabelNumber(res.goldRatePerGram)}/g = ₹${formatNumber(res.goldValue, { section: 'finance' })} + Making ₹${formatNumber(res.makingChargeAmount, { section: 'finance' })} + 3% GST (₹${formatNumber(res.gstAmount, { section: 'finance' })}) = ₹${formatNumber(res.totalPayable, { section: 'finance' })}`;
     }
 
     // Select dropdown listener
@@ -663,11 +678,11 @@ Purity: ${lastRes.purityKarat} (${lastRes.purityPct} Pure)
 Weight: ${inpWeight.value} ${unit.toUpperCase()} (${lastRes.weightInGrams}g)
 Effective Rate: ₹${formatLabelNumber(lastRes.goldRatePerGram)}/g
 ---
-Gold Value: ₹${formatNumber(lastRes.goldValue)}
-Making Charges: ₹${formatNumber(lastRes.makingChargeAmount)}
-${includeHallmark ? `BIS Hallmark Fee: ₹${lastRes.hallmarkAmount}\n` : ''}Subtotal: ₹${formatNumber(lastRes.subtotal)}
-Jewelry GST (3%): ₹${formatNumber(lastRes.gstAmount)}
-*Total Invoice Price: ₹${formatNumber(lastRes.totalPayable)}*
+Gold Value: ₹${formatNumber(lastRes.goldValue, { section: 'finance' })}
+Making Charges: ₹${formatNumber(lastRes.makingChargeAmount, { section: 'finance' })}
+${includeHallmark ? `BIS Hallmark Fee: ₹${formatNumber(lastRes.hallmarkAmount, { section: 'finance' })}\n` : ''}Subtotal: ₹${formatNumber(lastRes.subtotal, { section: 'finance' })}
+Jewelry GST (3%): ₹${formatNumber(lastRes.gstAmount, { section: 'finance' })}
+*Total Invoice Price: ₹${formatNumber(lastRes.totalPayable, { section: 'finance' })}*
 
 Calculated via EveryCalc`;
       shareText(text, 'Gold Jewelry Estimate');
@@ -692,6 +707,12 @@ Calculated via EveryCalc`;
     inpRate.value = formatInputValue(inpRate.value || '78000');
     renderPills();
     syncRateUI();
+
+    const slotGld = container.querySelector('#slot-affiliate-gld');
+    if (slotGld) {
+      const card = createAffiliateCardElement('GLD');
+      if (card) slotGld.appendChild(card);
+    }
     rec();
   }
 };
