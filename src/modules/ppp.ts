@@ -353,38 +353,38 @@ export const PppModule: CalculatorModule = {
           <div class="workspace-inputs-pane">
             <!-- Source Country & Salary Input Card -->
             <div class="input-card">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                 <label class="input-label" style="margin: 0;">Source Country / Currency</label>
                 <span id="ppp-source-flag-code" style="font-size: 13px; font-weight: 700; color: var(--accent-color);">🇺🇸 USD</span>
               </div>
-              <div class="input-row" style="margin-bottom: 10px;">
-                <select id="ppp-select-source" class="form-select">
+              <div style="margin-bottom: 12px;">
+                <select id="ppp-select-source" class="form-select ppp-country-select">
                   ${PPP_COUNTRIES.map((c) => `<option value="${c.id}" ${c.id === sourceId ? 'selected' : ''}>${c.flag} ${c.name} (${c.currency})</option>`).join('')}
                 </select>
               </div>
 
-              <label class="input-label" id="lbl-source-salary">Annual Salary / Income (${PPP_COUNTRIES[0].symbol})</label>
-              <div class="input-row">
-                <input type="number" id="ppp-input-salary" class="form-input" value="100000" placeholder="100000" step="any" inputmode="decimal" />
+              <label class="input-label" id="lbl-source-salary" style="margin-top: 6px;">Annual Salary / Income (${PPP_COUNTRIES[0].symbol})</label>
+              <div>
+                <input type="number" id="ppp-input-salary" class="form-input ppp-salary-input" value="100000" placeholder="100000" step="any" inputmode="decimal" />
               </div>
 
               <!-- Source Quick Preset Buttons -->
-              <div id="ppp-presets-container" class="tip-preset-row" style="margin-top: 10px;"></div>
+              <div id="ppp-presets-container" class="ppp-presets-grid"></div>
             </div>
 
             <!-- Swap Countries Action Row -->
-            <div class="swap-row" style="margin: 4px 0;">
-              <button id="btn-swap-ppp" class="btn-swap">⇅ Swap Source & Target Countries</button>
+            <div class="swap-row" style="margin: 2px 0;">
+              <button id="btn-swap-ppp" class="btn-swap ppp-swap-btn">⇅ Swap Countries</button>
             </div>
 
             <!-- Target Country Selector Card -->
             <div class="input-card">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                 <label class="input-label" style="margin: 0;">Target Country to Compare</label>
                 <span id="ppp-target-flag-code" style="font-size: 13px; font-weight: 700; color: var(--accent-color);">🇮🇳 INR</span>
               </div>
-              <div class="input-row">
-                <select id="ppp-select-target" class="form-select">
+              <div>
+                <select id="ppp-select-target" class="form-select ppp-country-select">
                   ${PPP_COUNTRIES.map((c) => `<option value="${c.id}" ${c.id === targetId ? 'selected' : ''}>${c.flag} ${c.name} (${c.currency})</option>`).join('')}
                 </select>
               </div>
@@ -393,37 +393,43 @@ export const PppModule: CalculatorModule = {
 
           <!-- Right Pane: Equivalent Salary & Living Cost Analytics -->
           <div class="workspace-analytics-pane">
-            <div class="result-card">
-              <span class="result-label">Equivalent Standard of Living Salary</span>
-              <div class="result-val highlight" id="ppp-res-equivalent" style="font-size: 26px; margin: 4px 0;">₹ 0</div>
-              <div id="ppp-res-explanation" style="font-size: 12px; color: var(--text-secondary); line-height: 1.4; margin-bottom: 12px;"></div>
+            <div class="result-card ppp-hero-card">
+              <div class="ppp-hero-header">
+                <span class="ppp-hero-flag" id="ppp-hero-flag">🇮🇳</span>
+                <span class="ppp-hero-target-name" id="ppp-hero-target-name">India Equivalent Salary</span>
+              </div>
+              <div class="ppp-hero-value" id="ppp-res-equivalent">₹ 0</div>
+              <div class="ppp-hero-sub">Annual Living Standard Parity</div>
 
-              <div class="result-row">
-                <span class="result-label">Cost of Living Comparison</span>
-                <span class="result-val" id="ppp-res-living-diff" style="font-weight: 700;">-</span>
+              <div id="ppp-res-explanation" class="ppp-insight-card"></div>
+
+              <!-- Responsive 2x2 Stats Grid -->
+              <div class="ppp-stats-grid">
+                <div class="ppp-stat-card">
+                  <span class="ppp-stat-label">Cost of Living</span>
+                  <span class="ppp-stat-value" id="ppp-res-living-diff">-</span>
+                </div>
+                <div class="ppp-stat-card">
+                  <span class="ppp-stat-label">Purchasing Power</span>
+                  <span class="ppp-stat-value" id="ppp-res-multiplier">-</span>
+                </div>
+                <div class="ppp-stat-card">
+                  <span class="ppp-stat-label">Rent & Housing</span>
+                  <span class="ppp-stat-value" id="ppp-res-rent-diff">-</span>
+                </div>
+                <div class="ppp-stat-card">
+                  <span class="ppp-stat-label">Groceries & Food</span>
+                  <span class="ppp-stat-value" id="ppp-res-grocery-diff">-</span>
+                </div>
               </div>
 
-              <div class="result-row">
-                <span class="result-label">Purchasing Power Multiplier</span>
-                <span class="result-val" id="ppp-res-multiplier" style="font-weight: 700;">-</span>
+              <!-- Spot Nominal Exchange Row -->
+              <div class="ppp-nominal-row">
+                <span>Spot Market Exchange:</span>
+                <span id="ppp-res-nominal" style="font-weight: 700; color: var(--text-primary);">-</span>
               </div>
 
-              <div class="result-row">
-                <span class="result-label">Nominal Currency Exchange</span>
-                <span class="result-val" id="ppp-res-nominal" style="color: var(--text-muted); font-size: 13px;">-</span>
-              </div>
-
-              <div class="result-row">
-                <span class="result-label">Rent & Housing Index</span>
-                <span class="result-val" id="ppp-res-rent-diff">-</span>
-              </div>
-
-              <div class="result-row">
-                <span class="result-label">Grocery & Food Index</span>
-                <span class="result-val" id="ppp-res-grocery-diff">-</span>
-              </div>
-
-              <button id="btn-share-ppp" class="btn-primary" style="margin-top: 14px; width: 100%;">
+              <button id="btn-share-ppp" class="btn-primary" style="margin-top: 12px; width: 100%;">
                 📤 Share PPP Comparison
               </button>
             </div>
@@ -435,11 +441,11 @@ export const PppModule: CalculatorModule = {
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
             <span style="font-size: 14.5px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
               <span>🌐</span>
-              <span>Global Living Standard Equivalents (All Countries)</span>
+              <span>Global Living Standard Equivalents (${PPP_COUNTRIES.length} Countries)</span>
             </span>
-            <small style="color: var(--text-secondary); font-size: 11.5px;">World Bank / IMF ICP Benchmarks • Tap to select target</small>
+            <small style="color: var(--text-secondary); font-size: 11.5px;">World Bank / IMF ICP Benchmarks • Tap card to select</small>
           </div>
-          <div id="ppp-all-countries-grid" class="all-units-grid"></div>
+          <div id="ppp-all-countries-grid" class="all-units-grid ppp-grid"></div>
         </div>
       </div>
     `;
@@ -454,6 +460,8 @@ export const PppModule: CalculatorModule = {
 
     const sourceFlagCode = container.querySelector('#ppp-source-flag-code') as HTMLElement;
     const targetFlagCode = container.querySelector('#ppp-target-flag-code') as HTMLElement;
+    const heroFlag = container.querySelector('#ppp-hero-flag') as HTMLElement;
+    const heroTargetName = container.querySelector('#ppp-hero-target-name') as HTMLElement;
 
     const resEquivalent = container.querySelector('#ppp-res-equivalent') as HTMLElement;
     const resExplanation = container.querySelector('#ppp-res-explanation') as HTMLElement;
@@ -471,6 +479,8 @@ export const PppModule: CalculatorModule = {
 
       const tgt = PPP_COUNTRIES.find((c) => c.id === targetId) || PPP_COUNTRIES[1];
       targetFlagCode.textContent = `${tgt.flag} ${tgt.currency}`;
+      heroFlag.textContent = tgt.flag;
+      heroTargetName.textContent = `${tgt.name} Equivalent Salary`;
 
       presetsBox.innerHTML = src.presets
         .map(
@@ -503,18 +513,19 @@ export const PppModule: CalculatorModule = {
           itemRes.costOfLivingDiffPct > 0
             ? `+${itemRes.costOfLivingDiffPct.toFixed(0)}% cost`
             : `${itemRes.costOfLivingDiffPct.toFixed(0)}% cost`;
-        const diffColor = itemRes.costOfLivingDiffPct > 0 ? '#ef4444' : '#10b981';
+        const badgeClass = itemRes.costOfLivingDiffPct > 0 ? 'costlier' : 'cheaper';
 
         return `
-          <div class="unit-grid-item ${isTarget ? 'pinned active' : ''}" data-country-id="${c.id}">
-            <div class="unit-grid-item-info">
-              <span class="unit-grid-item-name" style="display: flex; align-items: center; justify-content: space-between;">
-                <span>${c.flag} <strong style="font-weight: 700;">${c.name}</strong></span>
-                <span style="font-size: 11px; font-weight: 700; color: ${diffColor};">${diffText}</span>
-              </span>
-              <span class="unit-grid-item-val" style="font-size: 15px; font-weight: 700; color: var(--accent-color); margin-top: 3px;">
-                ${c.symbol} ${formatLabelNumber(itemRes.equivalentSalary)}
-              </span>
+          <div class="ppp-country-card ${isTarget ? 'active' : ''}" data-country-id="${c.id}">
+            <div class="ppp-country-card-header">
+              <div class="ppp-country-name-group">
+                <span class="ppp-country-flag">${c.flag}</span>
+                <span class="ppp-country-title">${c.name}</span>
+              </div>
+              <span class="ppp-country-badge ${badgeClass}">${diffText}</span>
+            </div>
+            <div class="ppp-country-val">
+              ${c.symbol} ${formatLabelNumber(itemRes.equivalentSalary)}
             </div>
           </div>
         `;
@@ -552,34 +563,34 @@ export const PppModule: CalculatorModule = {
         resLivingDiff.style.color = 'var(--text-primary)';
       } else if (res.costOfLivingDiffPct < 0) {
         const cheaperPct = Math.abs(res.costOfLivingDiffPct).toFixed(1);
-        resLivingDiff.textContent = `${tgt.name} is ${cheaperPct}% Cheaper`;
-        resLivingDiff.style.color = '#10b981'; // Green (positive savings)
+        resLivingDiff.textContent = `${cheaperPct}% Cheaper`;
+        resLivingDiff.style.color = '#10b981'; // Green
       } else {
         const pricierPct = res.costOfLivingDiffPct.toFixed(1);
-        resLivingDiff.textContent = `${tgt.name} is ${pricierPct}% More Expensive`;
-        resLivingDiff.style.color = '#ef4444'; // Red (higher cost)
+        resLivingDiff.textContent = `+${pricierPct}% More Expensive`;
+        resLivingDiff.style.color = '#ef4444'; // Red
       }
 
       // Multiplier
-      resMultiplier.textContent = `${res.purchasingPowerMultiplier.toFixed(2)}x real purchasing power`;
+      resMultiplier.textContent = `${res.purchasingPowerMultiplier.toFixed(2)}x Power`;
 
       // Nominal comparison
-      resNominal.textContent = `${tgt.symbol} ${formatLabelNumber(res.nominalSalary)} at spot exchange rate`;
+      resNominal.textContent = `${tgt.symbol} ${formatLabelNumber(res.nominalSalary)}`;
 
       // Sub-indices
       if (res.rentDiffPct < 0) {
-        resRentDiff.textContent = `Rent is ${Math.abs(res.rentDiffPct).toFixed(0)}% lower`;
+        resRentDiff.textContent = `${Math.abs(res.rentDiffPct).toFixed(0)}% lower`;
         resRentDiff.style.color = '#10b981';
       } else {
-        resRentDiff.textContent = `Rent is +${res.rentDiffPct.toFixed(0)}% higher`;
+        resRentDiff.textContent = `+${res.rentDiffPct.toFixed(0)}% higher`;
         resRentDiff.style.color = '#ef4444';
       }
 
       if (res.groceryDiffPct < 0) {
-        resGroceryDiff.textContent = `Groceries are ${Math.abs(res.groceryDiffPct).toFixed(0)}% lower`;
+        resGroceryDiff.textContent = `${Math.abs(res.groceryDiffPct).toFixed(0)}% lower`;
         resGroceryDiff.style.color = '#10b981';
       } else {
-        resGroceryDiff.textContent = `Groceries are +${res.groceryDiffPct.toFixed(0)}% higher`;
+        resGroceryDiff.textContent = `+${res.groceryDiffPct.toFixed(0)}% higher`;
         resGroceryDiff.style.color = '#ef4444';
       }
 
@@ -640,7 +651,7 @@ export const PppModule: CalculatorModule = {
 Calculated via EveryCalc PPP Calculator
 https://mehboob-dev.github.io/EveryCalc/`;
 
-      shareText('PPP Living Standard Comparison', text);
+      shareText(text, 'PPP Living Standard Comparison');
     });
 
     updatePresets();

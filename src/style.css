@@ -801,6 +801,280 @@ body {
   color: #ff9f0a;
 }
 
+/* Purchasing Power Parity (PPP) Responsive Architecture */
+.ppp-country-select {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 10px 14px !important;
+  font-size: clamp(13px, 3.2vw, 15px) !important;
+  font-weight: 600 !important;
+  border-radius: 12px !important;
+  background-color: var(--bg-surface) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  outline: none !important;
+  cursor: pointer !important;
+}
+
+.ppp-salary-input {
+  width: 100% !important;
+  box-sizing: border-box !important;
+  font-size: clamp(16px, 4.5vw, 20px) !important;
+  font-weight: 700 !important;
+  padding: 11px 14px !important;
+}
+
+.ppp-presets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+  gap: 6px;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.ppp-presets-grid .btn-preset {
+  min-width: 0 !important;
+  padding: 6px 8px !important;
+  font-size: clamp(11px, 2.7vw, 12.5px) !important;
+  text-align: center !important;
+  text-overflow: ellipsis !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+}
+
+.ppp-swap-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 4px auto;
+  padding: 8px 18px;
+  border-radius: 16px;
+  font-size: clamp(12px, 3vw, 13.5px);
+  font-weight: 600;
+  background: var(--bg-surface);
+  color: var(--accent-color);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--clay-btn-drop);
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.ppp-swap-btn:active {
+  transform: scale(0.96);
+}
+
+.ppp-hero-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ppp-hero-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: clamp(13px, 3.2vw, 15px);
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.ppp-hero-flag {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.ppp-hero-value {
+  font-size: clamp(22px, 5.5vw, 32px);
+  font-weight: 800;
+  color: var(--accent-color);
+  word-break: break-word;
+  line-height: 1.15;
+  margin: 4px 0;
+}
+
+.ppp-hero-sub {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ppp-insight-card {
+  background: rgba(59, 130, 246, 0.08);
+  border-left: 3px solid var(--accent-color);
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: clamp(11.5px, 2.9vw, 13px);
+  line-height: 1.45;
+  color: var(--text-primary);
+  margin-top: 8px;
+  word-break: break-word;
+}
+
+.ppp-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+
+@media (max-width: 360px) {
+  .ppp-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ppp-stat-card {
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.ppp-stat-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ppp-stat-value {
+  font-size: clamp(12px, 3.2vw, 14.5px);
+  font-weight: 700;
+  color: var(--text-primary);
+  word-break: break-word;
+  line-height: 1.25;
+}
+
+.ppp-nominal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 0 2px;
+  font-size: 12px;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+
+.ppp-country-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 11px 13px;
+  border-radius: 14px;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+  box-shadow: var(--clay-btn-drop);
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.ppp-country-card:hover {
+  border-color: var(--accent-color);
+  transform: translateY(-1px);
+}
+
+.ppp-country-card:active {
+  transform: scale(0.98);
+}
+
+.ppp-country-card.active {
+  border-color: var(--accent-color);
+  background-color: rgba(59, 130, 246, 0.08);
+  box-shadow: 0 0 0 1px var(--accent-color);
+}
+
+.ppp-country-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ppp-country-name-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+
+.ppp-country-flag {
+  font-size: 17px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.ppp-country-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ppp-country-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ppp-country-badge.cheaper {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.ppp-country-badge.costlier {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.ppp-country-val {
+  font-size: clamp(14px, 3.8vw, 16px);
+  font-weight: 700;
+  color: var(--accent-color);
+  word-break: break-all;
+}
+
+.all-units-grid.ppp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 10px;
+}
+
+@media (max-width: 600px) {
+  .all-units-grid.ppp-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 8px;
+  }
+}
+
+@media (max-width: 380px) {
+  .all-units-grid.ppp-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
 /* Timezone Scrubber & World Clock */
 .tmz-scrubber-card {
   background-color: var(--bg-surface);
