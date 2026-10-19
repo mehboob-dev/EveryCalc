@@ -1,4 +1,3 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://mehboob-dev.github.io/EveryCalc/sitemap.xml

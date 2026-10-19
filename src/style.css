@@ -1910,6 +1910,7 @@ body {
   /* Collapsed Sidebar State: Icon-Rail Mode like ChatGPT (58px width) */
   .desktop-shell.sidebar-collapsed .desktop-sidebar {
     width: 58px !important;
+    overflow-x: hidden !important;
     min-width: 58px !important;
     max-width: 58px !important;
     opacity: 1;
@@ -1972,15 +1973,35 @@ body {
     display: none;
   }
 
-  .desktop-shell.sidebar-collapsed .sidebar-category-label {
-    width: 32px;
-    height: 1px;
-    background-color: var(--border-color);
-    margin: 6px auto;
-    padding: 0;
-    font-size: 0;
-    overflow: hidden;
-    opacity: 0.6;
+  .desktop-shell.sidebar-collapsed .sidebar-cat-header,
+  .desktop-shell.sidebar-collapsed .sidebar-category-label,
+  .desktop-shell.sidebar-collapsed .desktop-sidebar .drawer-category-header {
+    width: 32px !important;
+    height: 1px !important;
+    min-height: 1px !important;
+    max-height: 1px !important;
+    background-color: var(--border-color) !important;
+    margin: 8px auto 4px !important;
+    padding: 0 !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
+    overflow: hidden !important;
+    opacity: 0.5 !important;
+    border: none !important;
+    display: block !important;
+    box-sizing: border-box !important;
+  }
+
+  .desktop-shell.sidebar-collapsed .sidebar-cat-header:first-child,
+  .desktop-shell.sidebar-collapsed .sidebar-category-label:first-child,
+  .desktop-shell.sidebar-collapsed .desktop-sidebar .drawer-category-header:first-child {
+    display: none !important;
+  }
+
+  .desktop-shell.sidebar-collapsed .sidebar-cat-header *,
+  .desktop-shell.sidebar-collapsed .sidebar-category-label *,
+  .desktop-shell.sidebar-collapsed .desktop-sidebar .drawer-category-header * {
+    display: none !important;
   }
 
   .desktop-shell.sidebar-collapsed .desktop-sidebar-ad-container {
@@ -2144,9 +2165,9 @@ body {
     padding: 8px 10px 4px;
   }
 
-  /* Show #btn-menu on desktop as sidebar expand/collapse toggle */
+  /* Hide #btn-menu on desktop because the sidebar has the single unified toggle */
   .desktop-main-area .calc-header #btn-menu {
-    display: flex !important;
+    display: none !important;
   }
 
   /* Hide mobile history drawer button because desktop history pane is on-screen */

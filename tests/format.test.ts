@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { formatNumber, resolveGrouping, resolvePrecision, formatExpressionGrouping } from '../src/core/format.ts';
+import { formatNumber, formatLabelNumber, resolveGrouping, resolvePrecision, formatExpressionGrouping } from '../src/core/format.ts';
 import { updateSettings } from '../src/core/settings.ts';
 import { setLanguage } from '../src/core/i18n.ts';
 
@@ -102,5 +102,22 @@ describe('Cross-cutting Number Formatting, Comma Grouping & Simplified Precision
   it('adds optional currency symbols appropriately', () => {
     const formatted = formatNumber('50000', { grouping: 'indian', precision: 2, currencySymbol: '₹' });
     expect(formatted).toBe('₹ 50,000.00');
+  });
+
+  it('does NOT apply 10 decimal places to labels, gold rate presets, or input echoes', () => {
+    // User configured 10 decimal places
+    updateSettings({ precision: 10 });
+
+    // Regular formatNumber will format results with 10 decimal places
+    expect(formatNumber('75000')).toBe('75,000.0000000000');
+
+    // formatLabelNumber must NEVER add artificial trailing zeros to labels or presets
+    expect(formatLabelNumber('75000')).toBe('75,000');
+    expect(formatLabelNumber('7200')).toBe('7,200');
+    expect(formatLabelNumber('75000.5')).toBe('75,000.5');
+
+    // formatNumber with trimTrailingZeros or isLabel also respects this
+    expect(formatNumber('75000', { trimTrailingZeros: true })).toBe('75,000');
+    expect(formatNumber('75000', { isLabel: true })).toBe('75,000');
   });
 });

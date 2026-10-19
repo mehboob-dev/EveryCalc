@@ -30,7 +30,6 @@ describe('User Settings Storage', () => {
     expect(s.angleMode).toBe('DEG');
     expect(s.hapticFeedback).toBe(true);
     expect(s.defaultCalculatorId).toBe('NOR');
-    expect(s.showAdsAndOffers).toBe(true);
   });
 
   it('persists and updates partial settings', () => {
@@ -38,13 +37,11 @@ describe('User Settings Storage', () => {
     let s = getSettings();
     expect(s.angleMode).toBe('RAD');
     expect(s.hapticFeedback).toBe(true);
-    expect(s.showAdsAndOffers).toBe(true);
 
-    updateSettings({ hapticFeedback: false, defaultCalculatorId: 'CUR', showAdsAndOffers: false });
+    updateSettings({ hapticFeedback: false, defaultCalculatorId: 'CUR' });
     s = getSettings();
     expect(s.angleMode).toBe('RAD');
     expect(s.hapticFeedback).toBe(false);
     expect(s.defaultCalculatorId).toBe('CUR');
-    expect(s.showAdsAndOffers).toBe(false);
   });
 });

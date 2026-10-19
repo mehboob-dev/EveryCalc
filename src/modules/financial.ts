@@ -1,8 +1,7 @@
 import Decimal from 'decimal.js';
 import { CalculatorModule } from './types.ts';
-import { formatNumber, numberToIndianWords, formatTenureYears, formatTenureMonths } from '../core/math.ts';
+import { formatNumber, formatLabelNumber } from '../core/math.ts';
 import { shareText } from '../core/share.ts';
-import { createAffiliateCardElement } from '../core/monetization/engine.ts';
 
 // ==========================================
 // 1. LOAN CALCULATOR (LON) & AMORTIZATION
@@ -257,7 +256,7 @@ export function calculateLoan(
         const firstMonthPayment = monthlyPrincipal.plus(p.times(i));
 
         return {
-          monthlyPayment: `Starts at ${formatNumber(firstMonthPayment.toFixed(2))}`,
+          monthlyPayment: `Starts at ${formatLabelNumber(firstMonthPayment.toFixed(2))}`,
           totalInterest: totalInt.toFixed(2),
           totalPayment: total.toFixed(2),
           frequency
@@ -269,7 +268,7 @@ export function calculateLoan(
     const schedule = generateAmortizationSchedule(principal, annualRatePct, termMonths, frequency, method);
     const firstPayment = schedule.rows.length > 0 ? schedule.rows[0].payment : '0.00';
     return {
-      monthlyPayment: method === 'AMORTIZATION' ? firstPayment : `Starts at ${formatNumber(firstPayment)}`,
+      monthlyPayment: method === 'AMORTIZATION' ? firstPayment : `Starts at ${formatLabelNumber(firstPayment)}`,
       totalInterest: schedule.totalInterest,
       totalPayment: schedule.totalPayment,
       frequency
@@ -315,11 +314,10 @@ export const LoanModule: CalculatorModule = {
                 <button class="btn-preset" data-amount="10000000">₹1 Cr</button>
               </div>
               <div class="input-row" style="margin-top: 8px;">
-                <input type="text" id="loan-p" class="form-input" value="50,00,000" placeholder="50,00,000" inputmode="numeric" />
+                <input type="number" id="loan-p" class="form-input" value="5000000" placeholder="5000000" step="any" inputmode="decimal" />
               </div>
-              <div id="loan-p-words" style="font-size: 12.5px; font-weight: 600; color: var(--accent-color, #ff9f0a); margin-top: 4px; padding-left: 2px;">Fifty Lakh Rupees</div>
 
-              <label class="input-label" style="margin-top: 14px;">Annual Interest Rate (%)</label>
+              <label class="input-label">Annual Interest Rate (%)</label>
               <div class="tip-preset-row">
                 <button class="btn-preset active" data-rate="8.5">8.5% (Home)</button>
                 <button class="btn-preset" data-rate="9.5">9.5% (Car)</button>
@@ -329,7 +327,7 @@ export const LoanModule: CalculatorModule = {
                 <input type="number" id="loan-r" class="form-input" value="8.5" placeholder="8.5" step="any" inputmode="decimal" />
               </div>
 
-              <label class="input-label" style="margin-top: 14px;">Loan Tenure (Months)</label>
+              <label class="input-label">Loan Tenure (Months)</label>
               <div class="tip-preset-row">
                 <button class="btn-preset" data-months="36">3 Yrs</button>
                 <button class="btn-preset" data-months="60">5 Yrs</button>
@@ -339,7 +337,6 @@ export const LoanModule: CalculatorModule = {
               <div class="input-row" style="margin-top: 8px;">
                 <input type="number" id="loan-n" class="form-input" value="240" placeholder="240" step="1" inputmode="numeric" />
               </div>
-              <div id="loan-n-years" style="font-size: 12.5px; font-weight: 600; color: var(--text-secondary); margin-top: 4px; padding-left: 2px;">20 Years (240 Months)</div>
             </div>
           </div>
 
@@ -358,22 +355,15 @@ export const LoanModule: CalculatorModule = {
                 <span id="loan-res-total" class="result-value">₹ 0.00</span>
               </div>
 
-              <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 10px;">
-                <button id="btn-view-amortization" class="btn-highlight-amort" style="width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 12px; background: linear-gradient(135deg, #ff9f0a, #ff6b00); color: #ffffff; border: none; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 15px rgba(255, 159, 10, 0.45); transition: transform 0.15s ease, box-shadow 0.15s ease;">
-                  <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 18px;">📊</span>
-                    <span>View Amortization Schedule</span>
-                  </div>
-                  <span style="font-size: 13px; background: rgba(255, 255, 255, 0.25); padding: 3px 8px; border-radius: 6px;">Full Table ➔</span>
+              <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
+                <button id="btn-view-amortization" class="seg-btn" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600;">
+                  <span>📊 View Amortization Schedule</span>
                 </button>
-                <button id="btn-share-loan" class="seg-btn active" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; padding: 10px 16px;">
+                <button id="btn-share-loan" class="seg-btn active" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600;">
                   <span>💬 Share Loan Quote on WhatsApp</span>
                 </button>
               </div>
             </div>
-
-            <!-- Contextual Loan Affiliate Slot -->
-            <div id="slot-affiliate-loan"></div>
           </div>
         </div>
 
@@ -435,8 +425,6 @@ export const LoanModule: CalculatorModule = {
     const inpP = container.querySelector('#loan-p') as HTMLInputElement;
     const inpR = container.querySelector('#loan-r') as HTMLInputElement;
     const inpN = container.querySelector('#loan-n') as HTMLInputElement;
-    const wordsP = container.querySelector('#loan-p-words') as HTMLElement;
-    const yearsN = container.querySelector('#loan-n-years') as HTMLElement;
 
     const periodicLabel = container.querySelector('#loan-periodic-label') as HTMLElement;
     const resMonthly = container.querySelector('#loan-res-monthly') as HTMLElement;
@@ -508,14 +496,9 @@ export const LoanModule: CalculatorModule = {
       }
     }
 
-    function getCleanP(): string {
-      return inpP.value.replace(/,/g, '').trim() || '0';
-    }
-
     function openAmortModal() {
-      const cleanP = getCleanP();
       if (!currentSchedule) {
-        currentSchedule = generateAmortizationSchedule(cleanP, inpR.value, inpN.value, frequency, method);
+        currentSchedule = generateAmortizationSchedule(inpP.value, inpR.value, inpN.value, frequency, method);
       }
       amortSumP.textContent = `₹${formatNumber(currentSchedule.totalPrincipal, { section: 'finance' })}`;
       amortSumI.textContent = `₹${formatNumber(currentSchedule.totalInterest, { section: 'finance' })}`;
@@ -557,25 +540,9 @@ export const LoanModule: CalculatorModule = {
     });
 
     function rec() {
-      const cleanP = getCleanP();
-      const res = calculateLoan(cleanP, inpR.value, inpN.value, method, frequency);
+      const res = calculateLoan(inpP.value, inpR.value, inpN.value, method, frequency);
       lastLoanRes = res;
-      currentSchedule = generateAmortizationSchedule(cleanP, inpR.value, inpN.value, frequency, method);
-
-      // Update in-words & tenure display
-      const numP = parseFloat(cleanP);
-      if (wordsP) {
-        wordsP.textContent = !isNaN(numP) && numP > 0 ? numberToIndianWords(cleanP) : '';
-      }
-      const months = parseInt(inpN.value, 10);
-      if (yearsN) {
-        if (!isNaN(months) && months > 0) {
-          const yrs = (months / 12).toFixed(1).replace(/\.0$/, '');
-          yearsN.textContent = `${yrs} Years (${months} Months)`;
-        } else {
-          yearsN.textContent = '';
-        }
-      }
+      currentSchedule = generateAmortizationSchedule(inpP.value, inpR.value, inpN.value, frequency, method);
 
       if (frequency === 'MONTHLY') {
         periodicLabel.textContent = 'Monthly EMI';
@@ -598,10 +565,9 @@ export const LoanModule: CalculatorModule = {
 
     btnShare.addEventListener('click', () => {
       if (!lastLoanRes) return;
-      const cleanP = getCleanP();
       const freqName = frequency === 'MONTHLY' ? 'Monthly' : frequency === 'BIWEEKLY' ? 'Bi-weekly' : 'Weekly';
       const text = `🏦 *Loan Quotation (${freqName})*
-Principal: ₹${formatNumber(cleanP, { section: 'finance' })}
+Principal: ₹${formatLabelNumber(inpP.value)}
 Interest Rate: ${inpR.value}% p.a.
 Tenure: ${inpN.value} Months (${(parseInt(inpN.value, 10) / 12).toFixed(1)} Years)
 Frequency: ${freqName}
@@ -647,9 +613,8 @@ Calculated via EveryCalc`;
     // Wire presets
     container.querySelectorAll('[data-amount]').forEach((b) => {
       b.addEventListener('click', () => {
-        const rawAmt = b.getAttribute('data-amount') || '5000000';
-        inpP.value = formatNumber(rawAmt, { section: 'finance' });
-        syncLoanPresets('data-amount', rawAmt);
+        inpP.value = b.getAttribute('data-amount') || '5000000';
+        syncLoanPresets('data-amount', inpP.value);
         rec();
       });
     });
@@ -671,16 +636,8 @@ Calculated via EveryCalc`;
     });
 
     inpP.addEventListener('input', () => {
-      syncLoanPresets('data-amount', getCleanP());
+      syncLoanPresets('data-amount', inpP.value);
       rec();
-    });
-
-    inpP.addEventListener('blur', () => {
-      const clean = getCleanP();
-      const n = parseFloat(clean);
-      if (!isNaN(n) && n > 0) {
-        inpP.value = formatNumber(clean, { section: 'finance' });
-      }
     });
 
     inpR.addEventListener('input', () => {
@@ -692,12 +649,6 @@ Calculated via EveryCalc`;
       syncLoanPresets('data-months', inpN.value);
       rec();
     });
-
-    const slotLoan = container.querySelector('#slot-affiliate-loan');
-    if (slotLoan) {
-      const card = createAffiliateCardElement('LON');
-      if (card) slotLoan.appendChild(card);
-    }
 
     rec();
   }
@@ -869,11 +820,10 @@ export const SavingsModule: CalculatorModule = {
                 <button class="btn-preset" data-sip-amt="25000">₹25,000</button>
               </div>
               <div class="input-row" style="margin-top: 8px;">
-                <input type="text" id="sip-monthly" class="form-input" value="5,000" placeholder="5,000" inputmode="numeric" />
+                <input type="number" id="sip-monthly" class="form-input" value="5000" placeholder="5000" step="any" inputmode="decimal" />
               </div>
-              <div id="sip-monthly-words" style="font-size: 12.5px; font-weight: 600; color: var(--accent-color, #ff9f0a); margin-top: 4px; padding-left: 2px;">Five Thousand Rupees</div>
 
-              <label class="input-label" style="margin-top: 14px;">Expected Return Rate (% p.a.)</label>
+              <label class="input-label">Expected Return Rate (% p.a.)</label>
               <div class="tip-preset-row">
                 <button class="btn-preset" data-sip-rate="10">10%</button>
                 <button class="btn-preset active" data-sip-rate="12">12%</button>
@@ -883,7 +833,7 @@ export const SavingsModule: CalculatorModule = {
                 <input type="number" id="sip-rate" class="form-input" value="12" placeholder="12" step="any" inputmode="decimal" />
               </div>
 
-              <label class="input-label" style="margin-top: 14px;">Time Period (Years)</label>
+              <label class="input-label">Time Period (Years)</label>
               <div class="tip-preset-row">
                 <button class="btn-preset" data-sip-years="5">5 Yrs</button>
                 <button class="btn-preset active" data-sip-years="10">10 Yrs</button>
@@ -893,7 +843,6 @@ export const SavingsModule: CalculatorModule = {
               <div class="input-row" style="margin-top: 8px;">
                 <input type="number" id="sip-years" class="form-input" value="10" placeholder="10" step="1" inputmode="numeric" />
               </div>
-              <div id="sip-years-desc" style="font-size: 12.5px; font-weight: 600; color: var(--text-secondary); margin-top: 4px; padding-left: 2px;">10 Years (120 Months)</div>
             </div>
 
             <!-- FD View -->
@@ -905,11 +854,10 @@ export const SavingsModule: CalculatorModule = {
                 <button class="btn-preset" data-fd-amt="500000">₹5 Lakh</button>
               </div>
               <div class="input-row" style="margin-top: 8px;">
-                <input type="text" id="fd-amt" class="form-input" value="1,00,000" placeholder="1,00,000" inputmode="numeric" />
+                <input type="number" id="fd-amt" class="form-input" value="100000" placeholder="100000" step="any" inputmode="decimal" />
               </div>
-              <div id="fd-amt-words" style="font-size: 12.5px; font-weight: 600; color: var(--accent-color, #ff9f0a); margin-top: 4px; padding-left: 2px;">One Lakh Rupees</div>
 
-              <label class="input-label" style="margin-top: 14px;">Annual Interest Rate (% p.a.)</label>
+              <label class="input-label">Annual Interest Rate (% p.a.)</label>
               <div class="tip-preset-row">
                 <button class="btn-preset" data-fd-rate="6.5">6.5%</button>
                 <button class="btn-preset active" data-fd-rate="7.1">7.1% (Standard)</button>
@@ -930,38 +878,24 @@ export const SavingsModule: CalculatorModule = {
               <div class="input-row">
                 <input type="number" id="fd-years" class="form-input" value="3" placeholder="3" step="1" inputmode="numeric" />
               </div>
-              <div id="fd-years-desc" style="font-size: 12.5px; font-weight: 600; color: var(--text-secondary); margin-top: 4px; padding-left: 2px;">3 Years (36 Months)</div>
             </div>
 
             <!-- RD / General Savings View -->
             <div id="view-sav" class="input-card" style="display: none;">
               <label class="input-label">Initial Deposit (₹)</label>
-              <div class="input-row">
-                <input type="text" id="sav-init" class="form-input" value="0" placeholder="0" inputmode="numeric" />
-              </div>
-              <div id="sav-init-words" style="font-size: 12.5px; font-weight: 600; color: var(--accent-color, #ff9f0a); margin-top: 4px; padding-left: 2px;"></div>
+              <input type="number" id="sav-init" class="form-input" value="0" placeholder="0" step="any" inputmode="decimal" />
 
-              <label class="input-label" style="margin-top: 14px;">Monthly Deposit (₹)</label>
-              <div class="input-row">
-                <input type="text" id="sav-monthly" class="form-input" value="2,000" placeholder="2,000" inputmode="numeric" />
-              </div>
-              <div id="sav-monthly-words" style="font-size: 12.5px; font-weight: 600; color: var(--accent-color, #ff9f0a); margin-top: 4px; padding-left: 2px;">Two Thousand Rupees</div>
+              <label class="input-label">Monthly Deposit (₹)</label>
+              <input type="number" id="sav-monthly" class="form-input" value="2000" placeholder="2000" step="any" inputmode="decimal" />
 
-              <label class="input-label" style="margin-top: 14px;">Annual Interest Rate (%)</label>
-              <div class="input-row">
-                <input type="number" id="sav-rate" class="form-input" value="6.5" placeholder="6.5" step="any" inputmode="decimal" />
-              </div>
+              <label class="input-label">Annual Interest Rate (%)</label>
+              <input type="number" id="sav-rate" class="form-input" value="6.5" placeholder="6.5" step="any" inputmode="decimal" />
 
-              <label class="input-label" style="margin-top: 14px;">Term (Months)</label>
-              <div class="input-row">
-                <input type="number" id="sav-term" class="form-input" value="24" placeholder="24" step="1" inputmode="numeric" />
-              </div>
-              <div id="sav-term-desc" style="font-size: 12.5px; font-weight: 600; color: var(--text-secondary); margin-top: 4px; padding-left: 2px;">2 Years (24 Months)</div>
+              <label class="input-label">Term (Months)</label>
+              <input type="number" id="sav-term" class="form-input" value="24" placeholder="24" step="1" inputmode="numeric" />
 
-              <label class="input-label" style="margin-top: 14px;">TDS / Tax on Interest (%) [Default 10% TDS]</label>
-              <div class="input-row">
-                <input type="number" id="sav-tax" class="form-input" value="10" placeholder="10" step="any" inputmode="decimal" />
-              </div>
+              <label class="input-label">TDS / Tax on Interest (%) [Default 10% TDS]</label>
+              <input type="number" id="sav-tax" class="form-input" value="10" placeholder="10" step="any" inputmode="decimal" />
             </div>
           </div>
 
@@ -999,9 +933,6 @@ export const SavingsModule: CalculatorModule = {
                 </button>
               </div>
             </div>
-
-            <!-- Contextual SIP/FD Affiliate Slot -->
-            <div id="slot-affiliate-ira"></div>
 
             <!-- Schedule Card: Year-by-Year Growth Table -->
             <div id="card-schedule" class="result-card">
@@ -1078,16 +1009,12 @@ export const SavingsModule: CalculatorModule = {
     const sipMonthly = container.querySelector('#sip-monthly') as HTMLInputElement;
     const sipRate = container.querySelector('#sip-rate') as HTMLInputElement;
     const sipYears = container.querySelector('#sip-years') as HTMLInputElement;
-    const sipMonthlyWords = container.querySelector('#sip-monthly-words') as HTMLElement;
-    const sipYearsDesc = container.querySelector('#sip-years-desc') as HTMLElement;
 
     // FD inputs
     const fdAmt = container.querySelector('#fd-amt') as HTMLInputElement;
     const fdRate = container.querySelector('#fd-rate') as HTMLInputElement;
     const fdYears = container.querySelector('#fd-years') as HTMLInputElement;
     const fdSenior = container.querySelector('#fd-senior') as HTMLInputElement;
-    const fdAmtWords = container.querySelector('#fd-amt-words') as HTMLElement;
-    const fdYearsDesc = container.querySelector('#fd-years-desc') as HTMLElement;
 
     // SAV inputs
     const inpInit = container.querySelector('#sav-init') as HTMLInputElement;
@@ -1095,18 +1022,11 @@ export const SavingsModule: CalculatorModule = {
     const inpRate = container.querySelector('#sav-rate') as HTMLInputElement;
     const inpTerm = container.querySelector('#sav-term') as HTMLInputElement;
     const inpTax = container.querySelector('#sav-tax') as HTMLInputElement;
-    const savInitWords = container.querySelector('#sav-init-words') as HTMLElement;
-    const savMonthlyWords = container.querySelector('#sav-monthly-words') as HTMLElement;
-    const savTermDesc = container.querySelector('#sav-term-desc') as HTMLElement;
 
     const resFinal = container.querySelector('#sav-res-final') as HTMLElement;
     const resPrinc = container.querySelector('#sav-res-principal') as HTMLElement;
     const resPost = container.querySelector('#sav-res-post-tax') as HTMLElement;
     const resPre = container.querySelector('#sav-res-pre-tax') as HTMLElement;
-
-    function cleanNum(str: string): string {
-      return (str || '').replace(/,/g, '').trim() || '0';
-    }
 
     function syncPresets(attr: string, value: string) {
       container.querySelectorAll(`[${attr}]`).forEach((el) => {
@@ -1116,22 +1036,13 @@ export const SavingsModule: CalculatorModule = {
 
     function rec() {
       if (mode === 'SIP') {
-        const cleanM = cleanNum(sipMonthly.value);
-        const res = calculateSIP(cleanM, sipRate.value, sipYears.value);
+        const res = calculateSIP(sipMonthly.value, sipRate.value, sipYears.value);
         lblInvested.textContent = 'Invested Amount';
-        valInvested.textContent = `₹ ${formatNumber(res.totalInvested, { section: 'finance' })}`;
+        valInvested.textContent = `₹ ${formatNumber(res.totalInvested)}`;
         lblReturns.textContent = 'Estimated Returns';
-        valReturns.textContent = `₹ ${formatNumber(res.estimatedReturns, { section: 'finance' })}`;
+        valReturns.textContent = `₹ ${formatNumber(res.estimatedReturns)}`;
         lblTotal.textContent = 'Total Maturity Value';
-        valTotal.textContent = `₹ ${formatNumber(res.totalValue, { section: 'finance' })}`;
-
-        if (sipMonthlyWords) {
-          const n = parseFloat(cleanM);
-          sipMonthlyWords.textContent = !isNaN(n) && n > 0 ? numberToIndianWords(cleanM) : '';
-        }
-        if (sipYearsDesc) {
-          sipYearsDesc.textContent = formatTenureYears(sipYears.value);
-        }
+        valTotal.textContent = `₹ ${formatNumber(res.totalValue)}`;
 
         const totalNum = parseFloat(res.totalValue) || 0;
         const invNum = parseFloat(res.totalInvested) || 0;
@@ -1146,13 +1057,13 @@ export const SavingsModule: CalculatorModule = {
         const years = Math.min(30, Math.max(1, parseInt(sipYears.value, 10) || 1));
         let html = '';
         for (let y = 1; y <= years; y++) {
-          const yrRes = calculateSIP(cleanM, sipRate.value, y);
+          const yrRes = calculateSIP(sipMonthly.value, sipRate.value, y);
           html += `
             <tr style="border-bottom: 1px solid rgba(128,128,128,0.1); line-height: 1.8;">
               <td style="text-align: left; padding: 6px 4px; font-weight: 600; color: var(--text-secondary);">Year ${y}</td>
-              <td style="padding: 6px 4px;">₹ ${formatNumber(yrRes.totalInvested, { section: 'finance' })}</td>
-              <td style="padding: 6px 4px; color: #10b981;">+ ₹ ${formatNumber(yrRes.estimatedReturns, { section: 'finance' })}</td>
-              <td style="padding: 6px 4px; font-weight: 700; color: var(--accent-color);">₹ ${formatNumber(yrRes.totalValue, { section: 'finance' })}</td>
+              <td style="padding: 6px 4px;">₹ ${formatNumber(yrRes.totalInvested)}</td>
+              <td style="padding: 6px 4px; color: #10b981;">+ ₹ ${formatNumber(yrRes.estimatedReturns)}</td>
+              <td style="padding: 6px 4px; font-weight: 700; color: var(--accent-color);">₹ ${formatNumber(yrRes.totalValue)}</td>
             </tr>
           `;
         }
@@ -1160,22 +1071,13 @@ export const SavingsModule: CalculatorModule = {
         if (cardSchedule) cardSchedule.style.display = 'block';
         if (scheduleTitle) scheduleTitle.textContent = 'Annual SIP Wealth Progression';
       } else if (mode === 'FD') {
-        const cleanA = cleanNum(fdAmt.value);
-        const res = calculateFD(cleanA, fdRate.value, fdYears.value, isSenior);
+        const res = calculateFD(fdAmt.value, fdRate.value, fdYears.value, isSenior);
         lblInvested.textContent = 'Deposit Amount';
-        valInvested.textContent = `₹ ${formatNumber(res.investedAmount, { section: 'finance' })}`;
+        valInvested.textContent = `₹ ${formatNumber(res.investedAmount)}`;
         lblReturns.textContent = `Total Interest Earned ${isSenior ? '(+0.5% Senior)' : ''}`;
-        valReturns.textContent = `₹ ${formatNumber(res.totalInterest, { section: 'finance' })}`;
+        valReturns.textContent = `₹ ${formatNumber(res.totalInterest)}`;
         lblTotal.textContent = 'Total Maturity Value';
-        valTotal.textContent = `₹ ${formatNumber(res.maturityAmount, { section: 'finance' })}`;
-
-        if (fdAmtWords) {
-          const n = parseFloat(cleanA);
-          fdAmtWords.textContent = !isNaN(n) && n > 0 ? numberToIndianWords(cleanA) : '';
-        }
-        if (fdYearsDesc) {
-          fdYearsDesc.textContent = formatTenureYears(fdYears.value);
-        }
+        valTotal.textContent = `₹ ${formatNumber(res.maturityAmount)}`;
 
         const totalNum = parseFloat(res.maturityAmount) || 0;
         const invNum = parseFloat(res.investedAmount) || 0;
@@ -1190,13 +1092,13 @@ export const SavingsModule: CalculatorModule = {
         const years = Math.min(30, Math.max(1, parseInt(fdYears.value, 10) || 1));
         let html = '';
         for (let y = 1; y <= years; y++) {
-          const yrRes = calculateFD(cleanA, fdRate.value, y, isSenior);
+          const yrRes = calculateFD(fdAmt.value, fdRate.value, y, isSenior);
           html += `
             <tr style="border-bottom: 1px solid rgba(128,128,128,0.1); line-height: 1.8;">
               <td style="text-align: left; padding: 6px 4px; font-weight: 600; color: var(--text-secondary);">Year ${y}</td>
-              <td style="padding: 6px 4px;">₹ ${formatNumber(yrRes.investedAmount, { section: 'finance' })}</td>
-              <td style="padding: 6px 4px; color: #10b981;">+ ₹ ${formatNumber(yrRes.totalInterest, { section: 'finance' })}</td>
-              <td style="padding: 6px 4px; font-weight: 700; color: var(--accent-color);">₹ ${formatNumber(yrRes.maturityAmount, { section: 'finance' })}</td>
+              <td style="padding: 6px 4px;">₹ ${formatNumber(yrRes.investedAmount)}</td>
+              <td style="padding: 6px 4px; color: #10b981;">+ ₹ ${formatNumber(yrRes.totalInterest)}</td>
+              <td style="padding: 6px 4px; font-weight: 700; color: var(--accent-color);">₹ ${formatNumber(yrRes.maturityAmount)}</td>
             </tr>
           `;
         }
@@ -1204,26 +1106,11 @@ export const SavingsModule: CalculatorModule = {
         if (cardSchedule) cardSchedule.style.display = 'block';
         if (scheduleTitle) scheduleTitle.textContent = 'Annual Fixed Deposit Schedule';
       } else {
-        const cleanI = cleanNum(inpInit.value);
-        const cleanM = cleanNum(inpMonthly.value);
-        const res = calculateSavings(cleanI, cleanM, inpRate.value, inpTerm.value, inpTax.value);
-        resFinal.textContent = `₹ ${formatNumber(res.finalBalance, { section: 'finance' })}`;
-        resPrinc.textContent = `₹ ${formatNumber(res.totalPrincipal, { section: 'finance' })}`;
-        resPost.textContent = `₹ ${formatNumber(res.postTaxInterest, { section: 'finance' })}`;
-        resPre.textContent = `₹ ${formatNumber(res.preTaxInterest, { section: 'finance' })}`;
-
-        if (savInitWords) {
-          const n = parseFloat(cleanI);
-          savInitWords.textContent = !isNaN(n) && n > 0 ? numberToIndianWords(cleanI) : '';
-        }
-        if (savMonthlyWords) {
-          const n = parseFloat(cleanM);
-          savMonthlyWords.textContent = !isNaN(n) && n > 0 ? numberToIndianWords(cleanM) : '';
-        }
-        if (savTermDesc) {
-          savTermDesc.textContent = formatTenureMonths(inpTerm.value);
-        }
-
+        const res = calculateSavings(inpInit.value, inpMonthly.value, inpRate.value, inpTerm.value, inpTax.value);
+        resFinal.textContent = `₹ ${formatNumber(res.finalBalance)}`;
+        resPrinc.textContent = `₹ ${formatNumber(res.totalPrincipal)}`;
+        resPost.textContent = `₹ ${formatNumber(res.postTaxInterest)}`;
+        resPre.textContent = `₹ ${formatNumber(res.preTaxInterest)}`;
         if (cardSchedule) cardSchedule.style.display = 'none';
       }
     }
@@ -1300,38 +1187,11 @@ export const SavingsModule: CalculatorModule = {
       });
     });
 
-    // Preset wireups for SIP with bi-directional sync
-    container.querySelectorAll('[data-sip-amt]').forEach((b) => {
-      b.addEventListener('click', () => {
-        const raw = b.getAttribute('data-sip-amt') || '5000';
-        sipMonthly.value = formatNumber(raw, { section: 'finance' });
-        syncPresets('data-sip-amt', raw);
-        rec();
-      });
-    });
-
-    container.querySelectorAll('[data-sip-rate]').forEach((b) => {
-      b.addEventListener('click', () => {
-        sipRate.value = b.getAttribute('data-sip-rate') || '12';
-        syncPresets('data-sip-rate', sipRate.value);
-        rec();
-      });
-    });
-
-    container.querySelectorAll('[data-sip-years]').forEach((b) => {
-      b.addEventListener('click', () => {
-        sipYears.value = b.getAttribute('data-sip-years') || '10';
-        syncPresets('data-sip-years', sipYears.value);
-        rec();
-      });
-    });
-
     // Preset wireups for FD with bi-directional sync
     container.querySelectorAll('[data-fd-amt]').forEach((b) => {
       b.addEventListener('click', () => {
-        const raw = b.getAttribute('data-fd-amt') || '100000';
-        fdAmt.value = formatNumber(raw, { section: 'finance' });
-        syncPresets('data-fd-amt', raw);
+        fdAmt.value = b.getAttribute('data-fd-amt') || '100000';
+        syncPresets('data-fd-amt', fdAmt.value);
         rec();
       });
     });
@@ -1344,24 +1204,9 @@ export const SavingsModule: CalculatorModule = {
       });
     });
 
-    function attachCommaBlur(input: HTMLInputElement) {
-      input.addEventListener('blur', () => {
-        const cl = cleanNum(input.value);
-        const n = parseFloat(cl);
-        if (!isNaN(n) && n >= 0) {
-          input.value = formatNumber(cl, { section: 'finance' });
-        }
-      });
-    }
-
-    attachCommaBlur(sipMonthly);
-    attachCommaBlur(fdAmt);
-    attachCommaBlur(inpInit);
-    attachCommaBlur(inpMonthly);
-
     // Bi-directional input sync listeners
     sipMonthly.addEventListener('input', () => {
-      syncPresets('data-sip-amt', cleanNum(sipMonthly.value));
+      syncPresets('data-sip-amt', sipMonthly.value);
       rec();
     });
 
@@ -1376,7 +1221,7 @@ export const SavingsModule: CalculatorModule = {
     });
 
     fdAmt.addEventListener('input', () => {
-      syncPresets('data-fd-amt', cleanNum(fdAmt.value));
+      syncPresets('data-fd-amt', fdAmt.value);
       rec();
     });
 
@@ -1392,39 +1237,35 @@ export const SavingsModule: CalculatorModule = {
     btnShareSavings?.addEventListener('click', () => {
       let text = '';
       if (mode === 'SIP') {
-        const cleanM = cleanNum(sipMonthly.value);
-        const res = calculateSIP(cleanM, sipRate.value, sipYears.value);
+        const res = calculateSIP(sipMonthly.value, sipRate.value, sipYears.value);
         text = `📈 *Mutual Fund SIP Plan*
-Monthly Investment: ₹${formatNumber(cleanM, { section: 'finance' })}
+Monthly Investment: ₹${formatLabelNumber(sipMonthly.value)}
 Expected Return: ${sipRate.value}% p.a.
-Duration: ${formatTenureYears(sipYears.value)}
+Duration: ${sipYears.value} Years
 ---
-Total Invested: ₹${formatNumber(res.totalInvested, { section: 'finance' })}
-Estimated Returns: ₹${formatNumber(res.estimatedReturns, { section: 'finance' })}
-*Total Maturity Value: ₹${formatNumber(res.totalValue, { section: 'finance' })}*
+Total Invested: ₹${formatNumber(res.totalInvested)}
+Estimated Returns: ₹${formatNumber(res.estimatedReturns)}
+*Total Maturity Value: ₹${formatNumber(res.totalValue)}*
 
 Calculated via EveryCalc`;
       } else {
-        const cleanA = cleanNum(fdAmt.value);
-        const res = calculateFD(cleanA, fdRate.value, fdYears.value, isSenior);
+        const res = calculateFD(fdAmt.value, fdRate.value, fdYears.value, isSenior);
         text = `🏦 *Fixed Deposit (FD) Plan*
-Deposit Amount: ₹${formatNumber(cleanA, { section: 'finance' })}
+Deposit Amount: ₹${formatLabelNumber(fdAmt.value)}
 Interest Rate: ${fdRate.value}% ${isSenior ? '(+0.5% Senior Citizen)' : ''}
-Duration: ${formatTenureYears(fdYears.value)} (Quarterly Compounding)
+Duration: ${fdYears.value} Years (Quarterly Compounding)
 ---
-Total Interest Earned: ₹${formatNumber(res.totalInterest, { section: 'finance' })}
-*Maturity Amount: ₹${formatNumber(res.maturityAmount, { section: 'finance' })}*
+Total Interest Earned: ₹${formatNumber(res.totalInterest)}
+*Maturity Amount: ₹${formatNumber(res.maturityAmount)}*
 
 Calculated via EveryCalc`;
       }
       shareText(text, 'Investment Plan');
     });
 
-    const slotIra = container.querySelector('#slot-affiliate-ira');
-    if (slotIra) {
-      const card = createAffiliateCardElement('IRA');
-      if (card) slotIra.appendChild(card);
-    }
+    [sipMonthly, sipRate, sipYears, fdAmt, fdRate, fdYears, inpInit, inpMonthly, inpRate, inpTerm, inpTax].forEach(
+      (inp) => inp?.addEventListener('input', rec)
+    );
 
     rec();
   }

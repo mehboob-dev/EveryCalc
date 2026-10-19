@@ -19,10 +19,6 @@ import { GoldModule } from './modules/gold.ts';
 import { IncomeTaxModule } from './modules/income_tax.ts';
 import { SalaryModule } from './modules/salary.ts';
 import {
-  syncRemoteMonetizationConfig,
-  createAdSenseContainer
-} from './core/monetization/engine.ts';
-import {
   initLanguage,
   getLanguage,
   setLanguage,
@@ -531,10 +527,6 @@ function switchMode(modeId: string, modeName?: string) {
   const moduleView = document.getElementById('view-module');
   const btnHistory = document.getElementById('btn-history');
 
-  if (window.location.hash !== `#${modeId}`) {
-    window.history.replaceState(null, '', `#${modeId}`);
-  }
-
   document.getElementById('modal-menu')?.classList.remove('open');
   document.querySelectorAll('.drawer-item, .sidebar-item').forEach((el) => {
     const isActive = el.getAttribute('data-id') === modeId;
@@ -560,19 +552,6 @@ function switchMode(modeId: string, modeName?: string) {
       }
     }
     if (btnHistory) btnHistory.style.display = 'none';
-  }
-
-  refreshActiveAdSlots();
-}
-
-function refreshActiveAdSlots(): void {
-  const desktopSidebarAd = document.getElementById('desktop-sidebar-ad');
-  if (desktopSidebarAd) {
-    desktopSidebarAd.innerHTML = '';
-    const adContainer = createAdSenseContainer('desktop-pane');
-    if (adContainer) {
-      desktopSidebarAd.appendChild(adContainer);
-    }
   }
 }
 
@@ -699,7 +678,6 @@ function setupApp() {
           <input type="text" id="desktop-search-input" class="desktop-search-input" placeholder="${t('searchPlaceholder')}" autocomplete="off" />
         </div>
         <div class="desktop-sidebar-list" id="desktop-sidebar-list"></div>
-        <div id="desktop-sidebar-ad" class="desktop-sidebar-ad-container"></div>
       </aside>
 
       <!-- Main App Area -->
@@ -710,10 +688,6 @@ function setupApp() {
             <span id="header-title" class="calc-title">${state.activeCalculatorName}</span>
           </div>
           <div class="calc-actions">
-            <button id="btn-install-app" class="btn-header-install" style="display: none;" title="Install PWA App (Save to Home Screen)">
-              <span class="install-icon">📲</span>
-              <span class="install-text">Install App</span>
-            </button>
             <button id="btn-lang" class="btn-icon" aria-label="Language / Idioma" title="Language / Idioma">🌐</button>
             <button id="btn-history" class="btn-icon" aria-label="History">🕒</button>
             <button id="btn-settings" class="btn-icon" aria-label="Settings">⚙️</button>
@@ -732,7 +706,6 @@ function setupApp() {
             </div>
 
             <div class="calc-sub-bar">
-              <button class="btn-sub" id="btn-open-const-bar" style="font-weight: 700; color: var(--accent-color, #ff9f0a);" title="Constants (π, e, φ, etc.)">π/e</button>
               <button class="btn-sub" id="btn-toggle-sci" title="Toggle Scientific Keypad">fx</button>
               <button class="btn-sub" id="btn-angle-mode" title="Toggle Degree / Radian">${userSettings.angleMode}</button>
               <button class="btn-sub" id="btn-sign" title="Toggle Sign (± / _)">±</button>
@@ -910,22 +883,6 @@ function setupApp() {
         </div>
       </div>
     </div>
-    </div>
-
-    <!-- PWA Install Guide Modal for Mobile & Browsers -->
-    <div id="modal-install-guide" class="modal-overlay center-modal" style="display: none;">
-      <div class="dialog-install" style="background: var(--bg-card, #1c1c1e); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; max-width: 380px; width: 90%; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 24px;">📲</span>
-            <h3 style="margin: 0; font-size: 16px; font-weight: 700;">Install EveryCalc</h3>
-          </div>
-          <button id="btn-close-install-guide" class="btn-icon">✕</button>
-        </div>
-        <div id="install-guide-body" style="font-size: 13.5px; line-height: 1.5; color: var(--text-secondary); margin-bottom: 16px;"></div>
-        <button id="btn-install-guide-ok" class="seg-btn active" style="width: 100%; padding: 10px; font-weight: 600;">Got it!</button>
-      </div>
-    </div>
   `;
 
   let draggedModeId: string | null = null;
@@ -960,21 +917,6 @@ function setupApp() {
     showToast('Favorites reordered ↕️');
   }
 
-  function moveFavoriteRelative(id: string, dir: -1 | 1) {
-    const favs = [...(userSettings.menuFavorites || ['NOR', 'LON', 'TAX', 'UNT'])];
-    const idx = favs.indexOf(id);
-    if (idx < 0) return;
-    const newIdx = idx + dir;
-    if (newIdx < 0 || newIdx >= favs.length) return;
-    const moved = favs.splice(idx, 1)[0];
-    favs.splice(newIdx, 0, moved);
-    userSettings.menuFavorites = favs;
-    updateSettings({ menuFavorites: favs });
-    triggerHaptic();
-    renderCalculatorLists();
-    showToast('Favorites reordered ↕️');
-  }
-
   function renderCalculatorLists() {
     const drawerList = document.getElementById('drawer-list');
     const desktopSidebarList = document.getElementById('desktop-sidebar-list');
@@ -988,7 +930,7 @@ function setupApp() {
       .filter(Boolean) as typeof CALCULATOR_MODES;
 
     // Helper to render Mobile Drawer item
-    function createDrawerItem(mode: typeof CALCULATOR_MODES[0], isFavSection: boolean = false, favIndex: number = -1, favTotal: number = 0) {
+    function createDrawerItem(mode: typeof CALCULATOR_MODES[0], isFavSection: boolean = false) {
       const localizedName = getModuleName(mode.id);
       const isFav = favorites.includes(mode.id);
 
@@ -999,15 +941,11 @@ function setupApp() {
 
       item.innerHTML = `
         <div class="drawer-item-content">
-          ${isFavSection ? '<span class="drawer-drag-handle" title="Drag to reorder" style="touch-action: none;">⋮⋮</span>' : ''}
+          ${isFavSection ? '<span class="drawer-drag-handle" title="Drag to reorder">⋮⋮</span>' : ''}
           <span style="font-size: 18px;">${mode.icon}</span>
           <span class="drawer-item-title">${localizedName}</span>
         </div>
         <div class="drawer-item-actions">
-          ${isFavSection ? `
-            <button class="btn-reorder-fav btn-reorder-up" data-fav-id="${mode.id}" title="Move up" ${favIndex <= 0 ? 'disabled style="opacity:0.25; pointer-events:none;"' : ''}>▲</button>
-            <button class="btn-reorder-fav btn-reorder-down" data-fav-id="${mode.id}" title="Move down" ${favIndex >= favTotal - 1 ? 'disabled style="opacity:0.25; pointer-events:none;"' : ''}>▼</button>
-          ` : ''}
           <button class="btn-star-fav ${isFav ? 'active' : ''}" data-fav-id="${mode.id}" title="${isFav ? 'Remove from favorites' : 'Add to favorites'}">
             ${isFav ? '⭐' : '☆'}
           </button>
@@ -1016,7 +954,7 @@ function setupApp() {
 
       item.addEventListener('click', (e) => {
         const target = e.target as HTMLElement;
-        if (target.closest('.btn-star-fav') || target.closest('.btn-reorder-fav') || target.closest('.drawer-drag-handle')) return;
+        if (target.closest('.btn-star-fav')) return;
         switchMode(mode.id, localizedName);
       });
 
@@ -1027,20 +965,6 @@ function setupApp() {
       });
 
       if (isFavSection) {
-        const btnUp = item.querySelector('.btn-reorder-up');
-        const btnDown = item.querySelector('.btn-reorder-down');
-
-        btnUp?.addEventListener('click', (e) => {
-          e.stopPropagation();
-          moveFavoriteRelative(mode.id, -1);
-        });
-
-        btnDown?.addEventListener('click', (e) => {
-          e.stopPropagation();
-          moveFavoriteRelative(mode.id, 1);
-        });
-
-        // Desktop HTML5 drag events
         item.addEventListener('dragstart', (e) => {
           draggedModeId = mode.id;
           item.classList.add('dragging');
@@ -1074,63 +998,6 @@ function setupApp() {
           document.querySelectorAll('.drawer-item').forEach((el) => el.classList.remove('drag-over'));
           draggedModeId = null;
         });
-
-        // Mobile Touch drag events
-        const dragHandle = item.querySelector('.drawer-drag-handle') as HTMLElement | null;
-        if (dragHandle) {
-          let touchStartY = 0;
-          let currentTargetEl: HTMLElement | null = null;
-
-          dragHandle.addEventListener('touchstart', (e: TouchEvent) => {
-            e.stopPropagation();
-            const touch = e.touches[0];
-            touchStartY = touch.clientY;
-            draggedModeId = mode.id;
-            item.classList.add('dragging');
-            triggerHaptic();
-          }, { passive: false });
-
-          dragHandle.addEventListener('touchmove', (e: TouchEvent) => {
-            e.preventDefault();
-            const touch = e.touches[0];
-            const deltaY = touch.clientY - touchStartY;
-            item.style.transform = `translateY(${deltaY}px) scale(1.02)`;
-            item.style.zIndex = '1000';
-
-            item.style.pointerEvents = 'none';
-            const under = document.elementFromPoint(touch.clientX, touch.clientY);
-            item.style.pointerEvents = '';
-
-            const targetItem = under?.closest('.drawer-item[draggable="true"]') as HTMLElement | null;
-            document.querySelectorAll('.drawer-item').forEach((el) => el.classList.remove('drag-over'));
-            if (targetItem && targetItem !== item) {
-              targetItem.classList.add('drag-over');
-              currentTargetEl = targetItem;
-            } else {
-              currentTargetEl = null;
-            }
-          }, { passive: false });
-
-          const finishTouch = () => {
-            item.classList.remove('dragging');
-            item.style.transform = '';
-            item.style.zIndex = '';
-            document.querySelectorAll('.drawer-item').forEach((el) => el.classList.remove('drag-over'));
-
-            if (currentTargetEl && draggedModeId) {
-              const targetId = currentTargetEl.getAttribute('data-id');
-              if (targetId && targetId !== draggedModeId) {
-                triggerHaptic();
-                reorderFavorites(draggedModeId, targetId);
-              }
-            }
-            draggedModeId = null;
-            currentTargetEl = null;
-          };
-
-          dragHandle.addEventListener('touchend', finishTouch);
-          dragHandle.addEventListener('touchcancel', finishTouch);
-        }
       }
 
       return item;
@@ -1180,8 +1047,8 @@ function setupApp() {
       `;
       drawerList.appendChild(favHeader);
 
-      favoriteModes.forEach((mode, idx) => {
-        drawerList.appendChild(createDrawerItem(mode, true, idx, favoriteModes.length));
+      favoriteModes.forEach((mode) => {
+        drawerList.appendChild(createDrawerItem(mode, true));
       });
     }
 
@@ -1325,105 +1192,9 @@ function setupApp() {
     }
   });
 
-  // PWA Install Button at Header (Visible if using from browser)
-  const btnInstallApp = document.getElementById('btn-install-app');
-  const modalInstallGuide = document.getElementById('modal-install-guide');
-  const btnCloseInstallGuide = document.getElementById('btn-close-install-guide');
-  const btnInstallGuideOk = document.getElementById('btn-install-guide-ok');
-  const installGuideBody = document.getElementById('install-guide-body');
-
-  function isStandalonePWA(): boolean {
-    return (
-      window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as any).standalone === true ||
-      document.referrer.includes('android-app://')
-    );
-  }
-
-  // Display install button if running in any browser (not standalone PWA)
-  if (btnInstallApp) {
-    if (isStandalonePWA()) {
-      btnInstallApp.style.display = 'none';
-    } else {
-      btnInstallApp.style.display = 'inline-flex';
-    }
-  }
-
-  let deferredInstallPrompt: any = null;
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredInstallPrompt = e;
-    if (btnInstallApp && !isStandalonePWA()) {
-      btnInstallApp.style.display = 'inline-flex';
-    }
-  });
-
-  window.addEventListener('appinstalled', () => {
-    if (btnInstallApp) btnInstallApp.style.display = 'none';
-    showToast('EveryCalc installed successfully! 🎉');
-  });
-
-  function openInstallGuide() {
-    if (!modalInstallGuide || !installGuideBody) return;
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-    if (isIOS) {
-      installGuideBody.innerHTML = `
-        <p style="margin: 0 0 10px; color: #fff; font-weight: 600;">To install EveryCalc on your iPhone or iPad:</p>
-        <ol style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px;">
-          <li>Tap the <strong>Share</strong> button (<strong>⎋ / [↑]</strong>) at the bottom or top of Safari.</li>
-          <li>Scroll down and tap <strong>"Add to Home Screen" ➕</strong>.</li>
-          <li>Tap <strong>Add</strong> in the top-right corner to finish.</li>
-        </ol>
-      `;
-    } else {
-      installGuideBody.innerHTML = `
-        <p style="margin: 0 0 10px; color: #fff; font-weight: 600;">To install EveryCalc from your browser:</p>
-        <ol style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px;">
-          <li>Tap your browser menu (<strong>⋮</strong> or <strong>⋯</strong>) or the address bar install icon (<strong>⊕</strong>).</li>
-          <li>Select <strong>"Install app"</strong> or <strong>"Add to Home Screen"</strong>.</li>
-          <li>Launch directly from your home screen with offline support!</li>
-        </ol>
-      `;
-    }
-    modalInstallGuide.style.display = 'flex';
-    modalInstallGuide.classList.add('open');
-  }
-
-  function closeInstallGuide() {
-    if (!modalInstallGuide) return;
-    modalInstallGuide.style.display = 'none';
-    modalInstallGuide.classList.remove('open');
-  }
-
-  btnInstallApp?.addEventListener('click', async () => {
-    triggerHaptic();
-    if (deferredInstallPrompt) {
-      deferredInstallPrompt.prompt();
-      try {
-        const choice = await deferredInstallPrompt.userChoice;
-        if (choice.outcome === 'accepted') {
-          if (btnInstallApp) btnInstallApp.style.display = 'none';
-        }
-      } catch {
-        // Fallback to guide
-        openInstallGuide();
-      }
-      deferredInstallPrompt = null;
-    } else {
-      openInstallGuide();
-    }
-  });
-
-  btnCloseInstallGuide?.addEventListener('click', closeInstallGuide);
-  btnInstallGuideOk?.addEventListener('click', closeInstallGuide);
-  modalInstallGuide?.addEventListener('click', (e) => {
-    if (e.target === modalInstallGuide) closeInstallGuide();
-  });
-
   // Constants Modal logic
   const modalConstants = document.getElementById('modal-constants');
   const btnOpenConst = document.getElementById('btn-open-const');
-  const btnOpenConstBar = document.getElementById('btn-open-const-bar');
   const btnCloseConst = document.getElementById('btn-close-constants');
   const constSearchInput = document.getElementById('const-search-input') as HTMLInputElement;
   const constantsList = document.getElementById('constants-list');
@@ -1459,14 +1230,11 @@ function setupApp() {
     });
   }
 
-  const openConstantsModal = () => {
+  btnOpenConst?.addEventListener('click', () => {
     renderConstantsList();
     if (constSearchInput) constSearchInput.value = '';
     modalConstants?.classList.add('open');
-  };
-
-  btnOpenConst?.addEventListener('click', openConstantsModal);
-  btnOpenConstBar?.addEventListener('click', openConstantsModal);
+  });
 
   btnCloseConst?.addEventListener('click', () => {
     modalConstants?.classList.remove('open');
@@ -1551,6 +1319,64 @@ function setupApp() {
       setTimeout(() => desktopSearchInput?.focus(), 250);
     }
   });
+
+  // Touch swipe gestures to expand and collapse sidebar and mobile drawers
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let isSwipingSidebar = false;
+
+  window.addEventListener(
+    'touchstart',
+    (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      const target = e.target as HTMLElement;
+
+      // Detect if touch originated in the sidebar or near the left edge (<= 70px)
+      const inSidebar = !!target.closest('.desktop-sidebar');
+      const nearLeftEdge = touchStartX <= 70;
+      isSwipingSidebar = inSidebar || nearLeftEdge;
+    },
+    { passive: true }
+  );
+
+  window.addEventListener(
+    'touchend',
+    (e: TouchEvent) => {
+      if (!isSwipingSidebar || e.changedTouches.length !== 1) return;
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
+
+      const deltaX = touchEndX - touchStartX;
+      const deltaY = touchEndY - touchStartY;
+
+      // Only trigger if predominantly horizontal swipe (> 1.3x vertical and > 40px distance)
+      if (Math.abs(deltaX) > Math.abs(deltaY) * 1.3 && Math.abs(deltaX) > 40) {
+        if (window.innerWidth >= 700) {
+          // Desktop / Foldable (>=700px)
+          if (deltaX > 0 && desktopShell?.classList.contains('sidebar-collapsed')) {
+            // Swipe right -> Expand sidebar
+            toggleDesktopSidebar(false);
+          } else if (deltaX < 0 && !desktopShell?.classList.contains('sidebar-collapsed')) {
+            // Swipe left -> Collapse sidebar
+            toggleDesktopSidebar(true);
+          }
+        } else {
+          // Mobile (<700px)
+          if (deltaX > 0 && touchStartX <= 40 && !modalMenu?.classList.contains('open')) {
+            // Swipe right from edge -> Open mobile drawer
+            modalMenu?.classList.add('open');
+          } else if (deltaX < 0 && modalMenu?.classList.contains('open')) {
+            // Swipe left -> Close mobile drawer
+            modalMenu?.classList.remove('open');
+          }
+        }
+      }
+      isSwipingSidebar = false;
+    },
+    { passive: true }
+  );
 
   btnMenu?.addEventListener('click', () => {
     if (window.innerWidth >= 700) {
@@ -1647,23 +1473,6 @@ function setupApp() {
   setDefaultTool?.addEventListener('change', () => {
     userSettings.defaultCalculatorId = setDefaultTool.value;
     updateSettings({ defaultCalculatorId: setDefaultTool.value });
-  });
-
-  const setAdsOn = document.getElementById('set-ads-on');
-  const setAdsOff = document.getElementById('set-ads-off');
-  setAdsOn?.addEventListener('click', () => {
-    userSettings.showAdsAndOffers = true;
-    updateSettings({ showAdsAndOffers: true });
-    setAdsOn.classList.add('active');
-    setAdsOff?.classList.remove('active');
-    refreshActiveAdSlots();
-  });
-  setAdsOff?.addEventListener('click', () => {
-    userSettings.showAdsAndOffers = false;
-    updateSettings({ showAdsAndOffers: false });
-    setAdsOff.classList.add('active');
-    setAdsOn?.classList.remove('active');
-    refreshActiveAdSlots();
   });
 
   const setNumberFormat = document.getElementById('set-number-format') as HTMLSelectElement;
@@ -1862,42 +1671,23 @@ function setupApp() {
   setupKeyboard();
 
   // Check URL hash or search param for direct tool deep-linking (e.g. #GST or ?tool=GST)
-  function handleDeepLink() {
-    const currentParams = new URLSearchParams(window.location.search);
-    const hash = window.location.hash.replace('#', '');
-    const currentToolParam = currentParams.get('tool') || hash;
-    if (currentToolParam) {
-      const p = currentToolParam.toLowerCase();
-      const targetMode = CALCULATOR_MODES.find(
-        (m) => m.id.toLowerCase() === p || m.name.toLowerCase().includes(p)
-      );
-      if (targetMode) {
-        switchMode(targetMode.id, getModuleName(targetMode.id));
-        return true;
-      }
+  const toolParam = urlParams.get('tool') || window.location.hash.replace('#', '');
+  if (toolParam) {
+    const p = toolParam.toLowerCase();
+    const targetMode = CALCULATOR_MODES.find(
+      (m) => m.id.toLowerCase() === p || m.name.toLowerCase().includes(p)
+    );
+    if (targetMode) {
+      switchMode(targetMode.id, getModuleName(targetMode.id));
     }
-    return false;
-  }
-
-  window.addEventListener('hashchange', () => {
-    handleDeepLink();
-  });
-
-  const deepLinked = handleDeepLink();
-  if (!deepLinked) {
-    if (userSettings.defaultCalculatorId && userSettings.defaultCalculatorId !== 'NOR') {
-      const defaultMode = CALCULATOR_MODES.find((m) => m.id === userSettings.defaultCalculatorId);
-      if (defaultMode) {
-        switchMode(defaultMode.id, getModuleName(defaultMode.id));
-      }
-    } else {
-      switchMode('NOR', getModuleName('NOR'));
+  } else if (userSettings.defaultCalculatorId && userSettings.defaultCalculatorId !== 'NOR') {
+    const defaultMode = CALCULATOR_MODES.find((m) => m.id === userSettings.defaultCalculatorId);
+    if (defaultMode) {
+      switchMode(defaultMode.id, getModuleName(defaultMode.id));
     }
+  } else {
+    switchMode('NOR', getModuleName('NOR'));
   }
-
-  // Initial load of ad slots and background sync of remote configuration
-  refreshActiveAdSlots();
-  syncRemoteMonetizationConfig().catch(() => {});
 }
 
 // Register Service Worker for offline PWA functionality & auto-update

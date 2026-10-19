@@ -1,5 +1,5 @@
 import { CalculatorModule } from './types.ts';
-import { formatNumber } from '../core/math.ts';
+import { formatLabelNumber } from '../core/math.ts';
 
 // ==========================================
 // 1. HEXADECIMAL & PROGRAMMER CONVERTER (HEX)
@@ -396,7 +396,7 @@ export const CurrencyModule: CalculatorModule = {
       // Amount in USD = amt / rFrom; Amount in Target = (amt / rFrom) * rTo
       const converted = (amt / rFrom) * rTo;
       const prefix = selTo.value === 'INR' ? '₹ ' : '';
-      resVal.textContent = `${prefix}${formatNumber(converted.toFixed(2))} ${selTo.value}`;
+      resVal.textContent = `${prefix}${formatLabelNumber(converted.toFixed(2))} ${selTo.value}`;
     }
 
     btnSwap.addEventListener('click', () => {
@@ -591,9 +591,9 @@ export const TimezoneModule: CalculatorModule = {
         <div id="tmz-city-list"></div>
 
         <!-- Add City Modal -->
-        <div id="modal-add-city" class="modal-overlay center-modal modal-cities-overlay" style="display: none;">
+        <div id="modal-add-city" class="modal-overlay center-modal" style="display: none;">
           <div class="dialog-cities">
-            <div class="calc-header" style="border-bottom: 1px solid var(--border-color); padding: 12px 16px; flex-shrink: 0;">
+            <div class="calc-header" style="border-bottom: 1px solid var(--border-color); padding: 12px 16px;">
               <div style="display: flex; align-items: center; gap: 8px;">
                 <span style="font-size: 20px;">🌐</span>
                 <h3 style="margin: 0; font-size: 16px; font-weight: 700;">Add Global City</h3>
@@ -601,11 +601,11 @@ export const TimezoneModule: CalculatorModule = {
               <button id="btn-close-add-city" class="btn-icon">✕</button>
             </div>
 
-            <div style="padding: 10px 16px 8px; flex-shrink: 0; background: var(--bg-primary);">
-              <input type="text" id="city-search-input" class="form-input" placeholder="🔍 Search by city or country..." autocomplete="off" autocapitalize="off" style="width: 100%; box-sizing: border-box;" />
+            <div style="padding: 12px 16px;">
+              <input type="text" id="city-search-input" class="form-input" placeholder="🔍 Search by city or country..." style="width: 100%; box-sizing: border-box;" />
             </div>
 
-            <div id="city-search-list" class="city-search-scroll-list" style="padding: 0 16px 16px; display: flex; flex-direction: column; gap: 8px;"></div>
+            <div id="city-search-list" style="padding: 0 16px 16px; display: flex; flex-direction: column; gap: 8px; max-height: 50vh; overflow-y: auto;"></div>
           </div>
         </div>
       </div>

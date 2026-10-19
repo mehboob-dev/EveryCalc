@@ -1,6 +1,6 @@
 import Decimal from 'decimal.js';
 import { CalculatorModule } from './types.ts';
-import { formatNumber, numberToIndianWords } from '../core/math.ts';
+import { formatNumber, formatLabelNumber } from '../core/math.ts';
 import { calculateIncomeTax } from './income_tax.ts';
 import { shareText } from '../core/share.ts';
 
@@ -24,11 +24,9 @@ export function calculateInHandSalary(
   ptMonthly: string | number = 200
 ): SalaryBreakdownResult {
   try {
-    const cleanCtc = String(annualCTC || 0).replace(/,/g, '');
-    const cleanPt = String(ptMonthly || 200).replace(/,/g, '');
-    const ctc = new Decimal(cleanCtc || 0);
+    const ctc = new Decimal(annualCTC || 0);
     const bPct = new Decimal(basicPct || 40).dividedBy(100);
-    const pt = new Decimal(cleanPt || 200);
+    const pt = new Decimal(ptMonthly || 200);
 
     if (ctc.isZero()) {
       return {
@@ -110,9 +108,8 @@ export const SalaryModule: CalculatorModule = {
                 <button class="btn-preset" data-sal="2500000">₹25 L</button>
               </div>
               <div class="input-row" style="margin-top: 8px;">
-                <input type="text" id="sal-ctc" class="form-input" value="15,00,000" placeholder="15,00,000" inputmode="numeric" />
+                <input type="number" id="sal-ctc" class="form-input" value="1500000" placeholder="1500000" step="any" inputmode="decimal" />
               </div>
-              <div id="sal-ctc-words" class="input-words-hint"></div>
 
               <label class="input-label">Basic Salary (% of CTC)</label>
               <div class="tip-preset-row">
@@ -186,7 +183,6 @@ export const SalaryModule: CalculatorModule = {
     `;
 
     const inpCtc = container.querySelector('#sal-ctc') as HTMLInputElement;
-    const inpCtcWords = container.querySelector('#sal-ctc-words') as HTMLElement;
     const inpBasicPct = container.querySelector('#sal-basic-pct') as HTMLInputElement;
     const inpPt = container.querySelector('#sal-pt') as HTMLInputElement;
 
@@ -205,45 +201,31 @@ export const SalaryModule: CalculatorModule = {
     let lastRes: SalaryBreakdownResult | null = null;
 
     function rec() {
-      const cleanCtc = inpCtc.value.replace(/,/g, '');
-      if (inpCtcWords) {
-        inpCtcWords.textContent = numberToIndianWords(cleanCtc);
-      }
-
-      const res = calculateInHandSalary(cleanCtc, inpBasicPct.value, inpPt.value);
+      const res = calculateInHandSalary(inpCtc.value, inpBasicPct.value, inpPt.value);
       lastRes = res;
 
-      resMonthlyInhand.textContent = `₹ ${formatNumber(res.monthlyTakeHome, { section: 'finance' })}`;
-      resAnnualInhand.textContent = `Annual in bank: ₹ ${formatNumber(res.annualTakeHome, { section: 'finance' })}`;
-      resGross.textContent = `₹ ${formatNumber(res.monthlyGross, { section: 'finance' })}`;
-      resBasic.textContent = `₹ ${formatNumber(res.monthlyBasic, { section: 'finance' })}`;
-      resHra.textContent = `₹ ${formatNumber(res.monthlyHRA, { section: 'finance' })}`;
-      resSpecial.textContent = `₹ ${formatNumber(res.monthlySpecialAllowance, { section: 'finance' })}`;
-      resEpf.textContent = `- ₹ ${formatNumber(res.monthlyEPF, { section: 'finance' })}`;
-      resPt.textContent = `- ₹ ${formatNumber(res.monthlyPT, { section: 'finance' })}`;
-      resTds.textContent = `- ₹ ${formatNumber(res.monthlyTDS, { section: 'finance' })}`;
-      resDeductions.textContent = `₹ ${formatNumber(res.monthlyTotalDeductions, { section: 'finance' })}`;
+      resMonthlyInhand.textContent = `₹ ${formatNumber(res.monthlyTakeHome)}`;
+      resAnnualInhand.textContent = `Annual in bank: ₹ ${formatNumber(res.annualTakeHome)}`;
+      resGross.textContent = `₹ ${formatNumber(res.monthlyGross)}`;
+      resBasic.textContent = `₹ ${formatNumber(res.monthlyBasic)}`;
+      resHra.textContent = `₹ ${formatNumber(res.monthlyHRA)}`;
+      resSpecial.textContent = `₹ ${formatNumber(res.monthlySpecialAllowance)}`;
+      resEpf.textContent = `- ₹ ${formatNumber(res.monthlyEPF)}`;
+      resPt.textContent = `- ₹ ${formatNumber(res.monthlyPT)}`;
+      resTds.textContent = `- ₹ ${formatNumber(res.monthlyTDS)}`;
+      resDeductions.textContent = `₹ ${formatNumber(res.monthlyTotalDeductions)}`;
     }
 
     function syncSalPresets(attr: string, val: string) {
-      const cleanVal = val.replace(/,/g, '');
       container.querySelectorAll(`[${attr}]`).forEach((b) => {
-        b.classList.toggle('active', b.getAttribute(attr) === cleanVal);
+        b.classList.toggle('active', b.getAttribute(attr) === val);
       });
     }
 
-    inpCtc.addEventListener('blur', () => {
-      const clean = inpCtc.value.replace(/,/g, '').trim();
-      if (clean && !isNaN(Number(clean))) {
-        inpCtc.value = formatNumber(clean, { section: 'finance' });
-      }
-    });
-
     container.querySelectorAll('[data-sal]').forEach((b) => {
       b.addEventListener('click', () => {
-        const raw = b.getAttribute('data-sal') || '1500000';
-        inpCtc.value = formatNumber(raw, { section: 'finance' });
-        syncSalPresets('data-sal', raw);
+        inpCtc.value = b.getAttribute('data-sal') || '1500000';
+        syncSalPresets('data-sal', inpCtc.value);
         rec();
       });
     });
@@ -259,17 +241,17 @@ export const SalaryModule: CalculatorModule = {
     btnShare.addEventListener('click', () => {
       if (!lastRes) return;
       const text = `💼 *Salary In-Hand Estimate*
-Annual CTC: ₹${formatNumber(lastRes.annualCTC, { section: 'finance' })}
-Monthly Gross: ₹${formatNumber(lastRes.monthlyGross, { section: 'finance' })}
+Annual CTC: ₹${formatLabelNumber(lastRes.annualCTC)}
+Monthly Gross: ₹${formatLabelNumber(lastRes.monthlyGross)}
 ---
 Deductions:
-• EPF: ₹${formatNumber(lastRes.monthlyEPF, { section: 'finance' })}
-• PT: ₹${formatNumber(lastRes.monthlyPT, { section: 'finance' })}
-• TDS (Income Tax): ₹${formatNumber(lastRes.monthlyTDS, { section: 'finance' })}
-Total Deductions: ₹${formatNumber(lastRes.monthlyTotalDeductions, { section: 'finance' })}
+• EPF: ₹${formatNumber(lastRes.monthlyEPF)}
+• PT: ₹${formatNumber(lastRes.monthlyPT)}
+• TDS (Income Tax): ₹${formatNumber(lastRes.monthlyTDS)}
+Total Deductions: ₹${formatNumber(lastRes.monthlyTotalDeductions)}
 ---
-💰 *Monthly Take-Home (In-Hand): ₹${formatNumber(lastRes.monthlyTakeHome, { section: 'finance' })}*
-Annual Take-Home: ₹${formatNumber(lastRes.annualTakeHome, { section: 'finance' })}
+💰 *Monthly Take-Home (In-Hand): ₹${formatNumber(lastRes.monthlyTakeHome)}*
+Annual Take-Home: ₹${formatNumber(lastRes.annualTakeHome)}
 
 Calculated via EveryCalc`;
       shareText(text, 'In-Hand Salary Estimate');

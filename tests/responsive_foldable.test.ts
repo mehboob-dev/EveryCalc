@@ -46,16 +46,23 @@ describe('Responsive Breakpoints, Foldable Support, Keypad Ratio & Collapsible S
     expect(css).toContain('min-width: max-content');
   });
 
-  it('keeps #btn-menu visible on desktop / unfolded screens to serve as sidebar expand/collapse toggle', () => {
+  it('hides #btn-menu on desktop / unfolded screens to eliminate duplicate toggle buttons with sidebar collapse button', () => {
     const desktopSection = css.slice(
       css.indexOf('@media (min-width: 700px)'),
       css.indexOf('@media (min-width: 1024px)')
     );
 
     expect(desktopSection).toContain('.desktop-main-area .calc-header #btn-menu');
-    expect(desktopSection).toContain('display: flex !important');
-    expect(desktopSection).toContain('.desktop-main-area .calc-header #btn-history');
     expect(desktopSection).toContain('display: none !important');
+    expect(desktopSection).toContain('.desktop-main-area .calc-header #btn-history');
+  });
+
+  it('provides touch swipe gesture support for expanding and collapsing sidebar and mobile drawers', () => {
+    expect(mainTs).toContain('isSwipingSidebar');
+    expect(mainTs).toContain('deltaX');
+    expect(mainTs).toContain('deltaY');
+    expect(mainTs).toContain("toggleDesktopSidebar(false)");
+    expect(mainTs).toContain("toggleDesktopSidebar(true)");
   });
 
   it('configures desktop history pane with min-width: 0 to prevent off-screen horizontal blowout', () => {

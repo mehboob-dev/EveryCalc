@@ -1,6 +1,6 @@
 import Decimal from 'decimal.js';
 import { CalculatorModule } from './types.ts';
-import { formatNumber } from '../core/math.ts';
+import { formatNumber, formatLabelNumber } from '../core/math.ts';
 
 // ==========================================
 // 1. HEALTH CALCULATOR (HET - BMI & BMR)
@@ -115,7 +115,7 @@ export const HealthModule: CalculatorModule = {
       const res = calculateHealth(inpH.value, inpW.value, inpA.value, gender);
       resBmi.textContent = res.bmi;
       resCat.textContent = res.bmiCategory;
-      resBmr.textContent = `${formatNumber(res.bmr)} kcal/day`;
+      resBmr.textContent = `${formatLabelNumber(res.bmr)} kcal/day`;
     }
 
     btnMale.addEventListener('click', () => {

@@ -1,8 +1,7 @@
 import Decimal from 'decimal.js';
 import { CalculatorModule } from './types.ts';
-import { formatNumber, numberToIndianWords } from '../core/math.ts';
+import { formatNumber, formatLabelNumber } from '../core/math.ts';
 import { shareText } from '../core/share.ts';
-import { createAffiliateCardElement } from '../core/monetization/engine.ts';
 
 export type TaxMode = 'EXCLUDE' | 'INCLUDE';
 
@@ -22,10 +21,8 @@ export function calculateTax(
   isInterState: boolean = false
 ): TaxCalculation {
   try {
-    const cleanAmt = String(amount || 0).replace(/,/g, '');
-    const cleanRate = String(taxRatePercent || 0).replace(/,/g, '');
-    const val = new Decimal(cleanAmt || 0);
-    const rate = new Decimal(cleanRate || 0);
+    const val = new Decimal(amount || 0);
+    const rate = new Decimal(taxRatePercent || 0);
 
     let net: Decimal;
     let tax: Decimal;
@@ -88,9 +85,8 @@ export const TaxModule: CalculatorModule = {
             <div class="input-card">
               <label id="tax-amount-label" class="input-label">Net Amount (₹ Before GST)</label>
               <div class="input-row">
-                <input type="text" id="tax-amount" class="form-input" placeholder="0.00" inputmode="numeric" />
+                <input type="number" id="tax-amount" class="form-input" placeholder="0.00" step="any" inputmode="decimal" />
               </div>
-              <div id="tax-amount-words" class="input-words-hint"></div>
 
               <label class="input-label">GST Slab Rate (%)</label>
               <div class="tip-preset-row">
@@ -139,16 +135,12 @@ export const TaxModule: CalculatorModule = {
                 </button>
               </div>
             </div>
-
-            <!-- Contextual GST / Billing Software Affiliate Slot -->
-            <div id="slot-affiliate-tax"></div>
           </div>
         </div>
       </div>
     `;
 
     const amountInput = container.querySelector('#tax-amount') as HTMLInputElement;
-    const amountWords = container.querySelector('#tax-amount-words') as HTMLElement;
     const rateInput = container.querySelector('#tax-rate') as HTMLInputElement;
     const amountLabel = container.querySelector('#tax-amount-label') as HTMLElement;
 
@@ -192,41 +184,29 @@ export const TaxModule: CalculatorModule = {
         if (rowIgst) rowIgst.style.display = 'none';
       }
 
-      const cleanAmount = amountInput.value.replace(/,/g, '');
-      if (amountWords) {
-        amountWords.textContent = numberToIndianWords(cleanAmount);
-      }
-
-      const res = calculateTax(cleanAmount, rateInput.value, currentMode, isInterState);
+      const res = calculateTax(amountInput.value, rateInput.value, currentMode, isInterState);
       lastRes = res;
-      if (resNet) resNet.textContent = `₹ ${formatNumber(res.netAmount, { section: 'finance' })}`;
-      if (resCgst) resCgst.textContent = `₹ ${formatNumber(res.cgstAmount || '0.00', { section: 'finance' })}`;
-      if (resSgst) resSgst.textContent = `₹ ${formatNumber(res.sgstAmount || '0.00', { section: 'finance' })}`;
-      if (resIgst) resIgst.textContent = `₹ ${formatNumber(res.igstAmount || '0.00', { section: 'finance' })}`;
-      if (resTax) resTax.textContent = `₹ ${formatNumber(res.taxAmount, { section: 'finance' })}`;
-      if (resGross) resGross.textContent = `₹ ${formatNumber(res.grossAmount, { section: 'finance' })}`;
+      if (resNet) resNet.textContent = `₹ ${formatNumber(res.netAmount)}`;
+      if (resCgst) resCgst.textContent = `₹ ${formatNumber(res.cgstAmount || '0.00')}`;
+      if (resSgst) resSgst.textContent = `₹ ${formatNumber(res.sgstAmount || '0.00')}`;
+      if (resIgst) resIgst.textContent = `₹ ${formatNumber(res.igstAmount || '0.00')}`;
+      if (resTax) resTax.textContent = `₹ ${formatNumber(res.taxAmount)}`;
+      if (resGross) resGross.textContent = `₹ ${formatNumber(res.grossAmount)}`;
     }
-
-    amountInput.addEventListener('blur', () => {
-      const clean = amountInput.value.replace(/,/g, '').trim();
-      if (clean && !isNaN(Number(clean))) {
-        amountInput.value = formatNumber(clean, { section: 'finance' });
-      }
-    });
 
     btnShare.addEventListener('click', () => {
       if (!lastRes) return;
       const rateVal = rateInput.value || '18';
       const breakdownText = isInterState
-        ? `IGST (${rateVal}%): ₹${formatNumber(lastRes.igstAmount || '0.00', { section: 'finance' })}`
-        : `CGST: ₹${formatNumber(lastRes.cgstAmount || '0.00', { section: 'finance' })} | SGST: ₹${formatNumber(lastRes.sgstAmount || '0.00', { section: 'finance' })}`;
+        ? `IGST (${rateVal}%): ₹${formatNumber(lastRes.igstAmount || '0.00')}`
+        : `CGST: ₹${formatNumber(lastRes.cgstAmount || '0.00')} | SGST: ₹${formatNumber(lastRes.sgstAmount || '0.00')}`;
 
       const text = `🧾 *GST Quotation (${isInterState ? 'Inter-State' : 'Intra-State'})*
-Net Amount: ₹${formatNumber(lastRes.netAmount, { section: 'finance' })}
+Net Amount: ₹${formatLabelNumber(lastRes.netAmount)}
 GST Rate: ${rateVal}%
 ${breakdownText}
-Total GST: ₹${formatNumber(lastRes.taxAmount, { section: 'finance' })}
-*Total Amount Payable: ₹${formatNumber(lastRes.grossAmount, { section: 'finance' })}*
+Total GST: ₹${formatNumber(lastRes.taxAmount)}
+*Total Amount Payable: ₹${formatNumber(lastRes.grossAmount)}*
 
 Calculated via EveryCalc`;
       shareText(text, 'GST Quotation');
@@ -284,11 +264,5 @@ Calculated via EveryCalc`;
       syncRatePresets(rateInput.value);
       recalculate();
     });
-
-    const slotTax = container.querySelector('#slot-affiliate-tax');
-    if (slotTax) {
-      const card = createAffiliateCardElement('TAX');
-      if (card) slotTax.appendChild(card);
-    }
   }
 };

@@ -11,6 +11,7 @@ export interface FormatOptions {
   section?: SectionType;
   trimTrailingZeros?: boolean;
   currencySymbol?: string;
+  isLabel?: boolean;
 }
 
 /**
@@ -123,8 +124,13 @@ export function formatNumber(
     return strVal;
   }
 
+  const isLabel = options?.isLabel === true;
   const grouping = resolveGrouping(options?.grouping);
-  const precision = resolvePrecision(options?.section, options?.precision);
+  const effectiveExplicitPrecision = isLabel
+    ? (options?.precision !== undefined ? options.precision : 'auto')
+    : options?.precision;
+  const precision = resolvePrecision(options?.section, effectiveExplicitPrecision);
+  const trimTrailingZeros = isLabel || options?.trimTrailingZeros === true;
   const decimalSep = grouping === 'european' ? ',' : '.';
 
   let formattedNumStr: string;
@@ -136,7 +142,12 @@ export function formatNumber(
     const groupedInt = groupIntegerDigits(parts[0], grouping);
 
     if (parts.length > 1 && precision > 0) {
-      formattedNumStr = groupedInt + decimalSep + parts[1];
+      if (trimTrailingZeros) {
+        const trimmed = parts[1].replace(/0+$/, '');
+        formattedNumStr = trimmed.length > 0 ? groupedInt + decimalSep + trimmed : groupedInt;
+      } else {
+        formattedNumStr = groupedInt + decimalSep + parts[1];
+      }
     } else {
       formattedNumStr = groupedInt;
     }
@@ -158,4 +169,21 @@ export function formatNumber(
   const symbol = options?.currencySymbol ? options.currencySymbol + ' ' : '';
 
   return symbol + sign + formattedNumStr;
+}
+
+/**
+ * Formats a number specifically for labels, preset pills, options, and input echoes.
+ * Preserves grouping commas without adding artificial decimal places or trailing zeros,
+ * even when the user has configured high decimal precision (e.g. 10 places).
+ */
+export function formatLabelNumber(
+  val: string | number | Decimal,
+  options?: FormatOptions
+): string {
+  return formatNumber(val, {
+    ...options,
+    isLabel: true,
+    precision: options?.precision !== undefined ? options.precision : 'auto',
+    trimTrailingZeros: true
+  });
 }
