@@ -684,7 +684,7 @@ function setupApp() {
       </aside>
 
       <!-- Main App Area -->
-      <div class="desktop-main-area">
+      <main class="desktop-main-area" id="main-content" role="main">
         <header class="calc-header">
           <div class="calc-title-group">
             <button id="btn-menu" class="btn-icon" aria-label="Open Menu">☰</button>
@@ -779,7 +779,7 @@ function setupApp() {
 
         <!-- Specialized Module View Container -->
         <div id="view-module" class="view-module-container" style="display: none;"></div>
-      </div>
+      </main>
     </div>
 
     <!-- Navigation Drawer Modal -->
