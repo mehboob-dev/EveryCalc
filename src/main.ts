@@ -184,6 +184,7 @@ function updateDisplay() {
   const displayExpr = document.getElementById('display-expression');
   const displayWords = document.getElementById('display-words');
   const displayPrev = document.getElementById('display-preview');
+  const calcDisplayBox = document.getElementById('calc-display-box');
   const btnClear = document.getElementById('btn-clear');
   const btnAngle = document.getElementById('btn-angle-mode');
 
@@ -207,6 +208,27 @@ function updateDisplay() {
       }
       displayMain.innerHTML = html;
     }
+
+    // Dynamic font scaling to keep long numbers and formulas on screen
+    const rawLen = (displayMain.textContent || '').length;
+    displayMain.classList.remove('len-compact', 'len-small', 'len-tiny', 'len-micro');
+    if (rawLen > 22) {
+      displayMain.classList.add('len-micro');
+    } else if (rawLen > 16) {
+      displayMain.classList.add('len-tiny');
+    } else if (rawLen > 12) {
+      displayMain.classList.add('len-small');
+    } else if (rawLen > 9) {
+      displayMain.classList.add('len-compact');
+    }
+
+    // Auto-scroll to keep active cursor or latest typed digits in view
+    const cursor = displayMain.querySelector('.calc-cursor') as HTMLElement;
+    if (cursor) {
+      cursor.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
+    } else {
+      displayMain.scrollLeft = displayMain.scrollWidth;
+    }
   }
 
   if (displayWords) {
@@ -215,10 +237,17 @@ function updateDisplay() {
 
   if (displayExpr) {
     displayExpr.textContent = state.expression;
+    if (state.expression) {
+      displayExpr.scrollLeft = displayExpr.scrollWidth;
+    }
   }
 
   if (displayPrev) {
     displayPrev.textContent = state.livePreview;
+  }
+
+  if (calcDisplayBox) {
+    calcDisplayBox.title = state.isResultDisplayed ? 'Click to copy result' : 'Tap character to edit cursor';
   }
 
   if (btnAngle) {
@@ -701,10 +730,10 @@ function setupApp() {
         <!-- General Calculator View -->
         <div id="view-general" class="view-general-container">
           <div class="calc-main-column">
-            <div class="calc-display" id="calc-display-box" title="Click to copy result">
+            <div class="calc-display" id="calc-display-box" title="Tap character to edit cursor">
               <div id="display-expression" class="display-expression"></div>
               <div id="display-main" class="display-main">0</div>
-              <div id="display-words" class="display-words" style="font-size: 0.9rem; color: var(--accent-color, #ff9f0a); min-height: 1.3rem; text-align: right; padding-right: 4px; font-weight: 600; letter-spacing: 0.3px;"></div>
+              <div id="display-words" class="display-words"></div>
               <div id="display-preview" class="display-preview"></div>
             </div>
 
@@ -1176,21 +1205,22 @@ function setupApp() {
   document.getElementById('btn-backspace')?.addEventListener('click', handleBackspace);
   document.getElementById('btn-sign')?.addEventListener('click', handleToggleSign);
 
-  // Tap-to-position cursor on display box
+  // Tap-to-position cursor on display box without unwanted clipboard copy
   const calcDisplayBox = document.getElementById('calc-display-box');
   calcDisplayBox?.addEventListener('click', (e) => {
     const target = e.target as HTMLElement;
     const token = target.closest('.char-token') as HTMLElement;
     if (token && token.dataset.idx !== undefined) {
+      // User tapped a character token to position the cursor - never copy
       const idx = parseInt(token.dataset.idx, 10);
       const rect = token.getBoundingClientRect();
       const isRightHalf = (e as MouseEvent).clientX > (rect.left + rect.width / 2);
       setCursorPos(isRightHalf ? idx + 1 : idx);
     } else if (state.isResultDisplayed) {
-      state.isResultDisplayed = false;
-      setCursorPos(state.formula.length);
-      updateDisplay();
+      // User tapped the completed result box - copy the calculated answer
+      copyCurrentResult();
     } else {
+      // Tapped outside tokens in formula mode - place cursor at end, never copy
       setCursorPos(state.formula.length);
     }
   });
@@ -1628,12 +1658,6 @@ function setupApp() {
       document.documentElement.setAttribute('data-theme', savedTheme);
     }
   }
-
-  // Display box click to copy
-  const displayBox = document.getElementById('calc-display-box');
-  displayBox?.addEventListener('click', () => {
-    copyCurrentResult();
-  });
 
   // Desktop history clear
   const btnClearDesktopHistory = document.getElementById('btn-clear-desktop-history');
