@@ -1143,6 +1143,7 @@ function setupApp() {
 
       const item = document.createElement('div');
       item.setAttribute('data-id', mode.id);
+      item.setAttribute('title', localizedName);
       item.className = `sidebar-item ${mode.id === state.activeCalculatorId ? 'active' : ''}`;
       item.innerHTML = `
         <div style="display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1;">
@@ -1513,21 +1514,42 @@ function setupApp() {
     const isCollapsed = desktopShell.classList.contains('sidebar-collapsed');
     const targetState = typeof forceState === 'boolean' ? forceState : !isCollapsed;
     desktopShell.classList.toggle('sidebar-collapsed', targetState);
+    if (btnCollapseSidebar) {
+      btnCollapseSidebar.textContent = targetState ? '▶' : '◀';
+      btnCollapseSidebar.title = targetState ? 'Expand sidebar' : 'Collapse sidebar';
+    }
     try {
       localStorage.setItem('everycalc-sidebar-collapsed', targetState ? 'true' : 'false');
     } catch {}
   }
 
-  // Restore remembered sidebar state on widescreen / foldables
+  // Restore remembered sidebar state on widescreen / foldables (DEFAULT TO COLLAPSED ICON RAIL like ChatGPT)
   try {
     const savedState = localStorage.getItem('everycalc-sidebar-collapsed');
-    if (savedState === 'true' && desktopShell) {
+    const shouldCollapse = savedState === null || savedState === 'true';
+    if (shouldCollapse && desktopShell) {
       desktopShell.classList.add('sidebar-collapsed');
+      if (btnCollapseSidebar) {
+        btnCollapseSidebar.textContent = '▶';
+        btnCollapseSidebar.title = 'Expand sidebar';
+      }
+    } else if (btnCollapseSidebar) {
+      btnCollapseSidebar.textContent = '◀';
+      btnCollapseSidebar.title = 'Collapse sidebar';
     }
   } catch {}
 
   btnCollapseSidebar?.addEventListener('click', () => {
-    toggleDesktopSidebar(true);
+    toggleDesktopSidebar();
+  });
+
+  const sidebarSearch = document.querySelector('.desktop-sidebar-search') as HTMLElement;
+  const desktopSearchInput = document.getElementById('desktop-search-input') as HTMLInputElement;
+  sidebarSearch?.addEventListener('click', () => {
+    if (desktopShell?.classList.contains('sidebar-collapsed')) {
+      toggleDesktopSidebar(false);
+      setTimeout(() => desktopSearchInput?.focus(), 250);
+    }
   });
 
   btnMenu?.addEventListener('click', () => {

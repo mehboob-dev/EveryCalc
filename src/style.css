@@ -181,20 +181,23 @@ body {
   box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4), var(--clay-inset);
 }
 
-/* Recessed Clay Display */
+/* Recessed Clay Display - 40% Share */
 .calc-display {
-  flex: 1;
+  flex: 0 0 38%;
+  max-height: 40%;
+  min-height: 110px;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   align-items: flex-end;
-  padding: clamp(10px, 3vw, 16px) clamp(12px, 4vw, 20px);
-  margin: 6px clamp(8px, 3vw, 16px) 8px;
+  padding: clamp(8px, 1.8vh, 14px) clamp(12px, 3.5vw, 18px);
+  margin: 4px clamp(8px, 3vw, 16px) 6px;
   background-color: var(--bg-secondary);
-  border-radius: 22px;
+  border-radius: 20px;
   box-shadow: var(--clay-inset);
   word-break: break-all;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .display-expression {
@@ -323,20 +326,25 @@ body {
   box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4), var(--clay-inset);
 }
 
-/* Claymorphic Keypad Grid */
+/* Claymorphic Keypad Grid - 60% Height Share */
 .calc-keypad {
+  flex: 1;
+  min-height: 0;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: clamp(6px, 2vw, 12px);
-  padding: 6px clamp(8px, 3vw, 16px) clamp(16px, 4vw, 24px);
+  grid-template-rows: repeat(5, 1fr);
+  gap: clamp(6px, 1.6vh, 10px);
+  padding: 4px clamp(8px, 3vw, 16px) clamp(10px, 2vh, 18px);
   background-color: var(--bg-primary);
+  box-sizing: border-box;
 }
 
 .calc-btn {
-  height: clamp(44px, 8.5vh, 72px);
-  border-radius: clamp(14px, 3.8vw, 20px);
+  height: 100%;
+  min-height: clamp(48px, 7.5vh, 76px);
+  border-radius: clamp(14px, 3.5vw, 20px);
   border: none;
-  font-size: clamp(18px, 5.5vw, 24px);
+  font-size: clamp(19px, 3vh, 26px);
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -1551,29 +1559,68 @@ body {
   text-align: right;
 }
 
-/* Preset Pill Buttons */
+/* Preset Pill Buttons - Flexible & Overflow-Safe */
 .tip-preset-row {
   display: flex;
-  gap: clamp(4px, 1.5vw, 8px);
+  gap: clamp(4px, 1.2vw, 8px);
   margin-top: 8px;
   flex-wrap: wrap;
 }
 
 .btn-preset {
-  flex: 1 1 calc(20% - 6px);
-  min-width: 52px;
-  padding: 8px 4px;
+  flex: 1 1 auto;
+  min-width: max-content;
+  padding: 7px 12px;
   background-color: var(--bg-surface);
   border: none;
   border-radius: 12px;
   color: var(--text-primary);
-  font-size: clamp(11.5px, 3.2vw, 14px);
+  font-size: clamp(11.5px, 2.8vw, 13px);
   font-weight: 600;
   cursor: pointer;
   text-align: center;
   white-space: nowrap;
   box-shadow: var(--clay-btn-drop), var(--clay-btn-light), var(--clay-btn-dark);
   transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+/* Segmented Pill Toggle Groups */
+.pill-toggle-group {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--bg-secondary);
+  border-radius: 12px;
+  padding: 3px;
+  gap: 3px;
+  box-shadow: var(--clay-inset);
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+.pill-toggle-btn {
+  flex: 0 0 auto;
+  min-width: max-content;
+  padding: 5px 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  line-height: 1.2;
+}
+
+.pill-toggle-btn:hover {
+  color: var(--text-primary);
+}
+
+.pill-toggle-btn.active {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  box-shadow: var(--clay-btn-drop), var(--clay-btn-light), var(--clay-btn-dark);
 }
 
 .btn-preset:active {
@@ -1860,15 +1907,84 @@ body {
     will-change: width, opacity;
   }
 
-  /* Collapsed Sidebar State - expands workspace and history pane */
+  /* Collapsed Sidebar State: Icon-Rail Mode like ChatGPT (58px width) */
   .desktop-shell.sidebar-collapsed .desktop-sidebar {
-    width: 0 !important;
-    min-width: 0 !important;
-    max-width: 0 !important;
-    opacity: 0;
-    visibility: hidden;
-    border-right: none;
-    pointer-events: none;
+    width: 58px !important;
+    min-width: 58px !important;
+    max-width: 58px !important;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  .desktop-shell.sidebar-collapsed .desktop-logo-text {
+    display: none;
+  }
+
+  .desktop-shell.sidebar-collapsed .desktop-logo-group {
+    display: none;
+  }
+
+  .desktop-shell.sidebar-collapsed .desktop-sidebar-header {
+    justify-content: center;
+    padding: 10px 4px;
+    gap: 0;
+  }
+
+  .desktop-shell.sidebar-collapsed .btn-sidebar-collapse {
+    margin: 0 auto;
+  }
+
+  .desktop-shell.sidebar-collapsed .desktop-sidebar-search {
+    padding: 6px 0;
+    margin: 8px 6px 4px;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .desktop-shell.sidebar-collapsed .desktop-search-input {
+    display: none;
+  }
+
+  .desktop-shell.sidebar-collapsed .desktop-sidebar-list {
+    padding: 6px 4px 16px;
+    align-items: center;
+  }
+
+  .desktop-shell.sidebar-collapsed .sidebar-item {
+    justify-content: center;
+    padding: 9px 0;
+    width: 44px;
+    border-radius: 12px;
+  }
+
+  .desktop-shell.sidebar-collapsed .sidebar-item-icon {
+    font-size: 18px;
+    width: auto;
+    margin: 0;
+  }
+
+  .desktop-shell.sidebar-collapsed .sidebar-item-name {
+    display: none;
+  }
+
+  .desktop-shell.sidebar-collapsed .btn-star-fav {
+    display: none;
+  }
+
+  .desktop-shell.sidebar-collapsed .sidebar-category-label {
+    width: 32px;
+    height: 1px;
+    background-color: var(--border-color);
+    margin: 6px auto;
+    padding: 0;
+    font-size: 0;
+    overflow: hidden;
+    opacity: 0.6;
+  }
+
+  .desktop-shell.sidebar-collapsed .desktop-sidebar-ad-container {
+    display: none;
   }
 
   .desktop-sidebar-header {
@@ -2058,18 +2174,23 @@ body {
     width: clamp(280px, 42vw, 320px);
     min-width: 270px;
     max-width: 330px;
+    height: 100%;
     display: flex;
     flex-direction: column;
     flex: none;
-    overflow-y: auto;
-    padding-bottom: 14px;
+    overflow: hidden;
+    padding-bottom: 6px;
     box-sizing: border-box;
   }
 
   .calc-display {
+    flex: 0 0 38%;
+    max-height: 38%;
+    min-height: 120px;
     padding: 10px 14px;
     border-radius: 16px;
-    margin-bottom: 6px;
+    margin: 0 0 6px 0;
+    box-sizing: border-box;
   }
 
   .display-main {
@@ -2078,17 +2199,22 @@ body {
   }
 
   .calc-keypad {
+    flex: 1;
+    min-height: 0;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 7px;
-    padding: 6px 0 0 0;
+    grid-template-rows: repeat(5, 1fr);
+    gap: clamp(5px, 0.9vh, 7px);
+    padding: 4px 0 0 0;
+    box-sizing: border-box;
   }
 
   .calc-btn {
     aspect-ratio: unset;
-    height: clamp(44px, 5.8vh, 50px);
+    height: 100%;
+    min-height: 44px;
     border-radius: 14px;
-    font-size: 20px;
+    font-size: clamp(18px, 2.2vh, 22px);
   }
 
   .calc-btn.btn-op {

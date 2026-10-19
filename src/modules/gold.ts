@@ -317,10 +317,10 @@ export const GoldModule: CalculatorModule = {
               <div style="margin-bottom: 16px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 4px;">
                   <label class="input-label" style="margin: 0;">Gold Weight</label>
-                  <div style="display: flex; gap: 4px;">
-                    <button class="btn-sub active" id="btn-unit-g" style="padding: 2px 8px; font-size: 11px;">Grams</button>
-                    <button class="btn-sub" id="btn-unit-pavan" style="padding: 2px 8px; font-size: 11px;">Pavan (8g)</button>
-                    <button class="btn-sub" id="btn-unit-tola" style="padding: 2px 8px; font-size: 11px;">Tola (11.66g)</button>
+                  <div class="pill-toggle-group">
+                    <button class="pill-toggle-btn active" id="btn-unit-g">Grams</button>
+                    <button class="pill-toggle-btn" id="btn-unit-pavan">Pavan (8g)</button>
+                    <button class="pill-toggle-btn" id="btn-unit-tola">Tola (11.66g)</button>
                   </div>
                 </div>
                 <input type="number" id="gld-weight" class="form-input" value="10" placeholder="10" step="any" inputmode="decimal" />
@@ -330,9 +330,9 @@ export const GoldModule: CalculatorModule = {
               <div style="margin-bottom: 16px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
                   <label class="input-label" id="lbl-gold-rate" style="margin: 0;">Gold Rate (₹)</label>
-                  <div style="display: flex; gap: 4px;">
-                    <button class="btn-sub" id="btn-rate-g" style="padding: 2px 8px; font-size: 11px;">₹ / Gram</button>
-                    <button class="btn-sub active" id="btn-rate-10g" style="padding: 2px 8px; font-size: 11px;">₹ / 10 Grams</button>
+                  <div class="pill-toggle-group">
+                    <button class="pill-toggle-btn" id="btn-rate-g">₹ / Gram</button>
+                    <button class="pill-toggle-btn active" id="btn-rate-10g">₹ / 10 Grams</button>
                   </div>
                 </div>
 
@@ -347,10 +347,10 @@ export const GoldModule: CalculatorModule = {
               <div style="margin-bottom: 16px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
                   <label class="input-label" style="margin: 0;">Making Charges</label>
-                  <div style="display: flex; gap: 4px;">
-                    <button class="btn-sub active" id="btn-mc-pct" style="padding: 2px 8px; font-size: 11px;">Percentage (%)</button>
-                    <button class="btn-sub" id="btn-mc-flat-g" style="padding: 2px 8px; font-size: 11px;">₹ / Gram</button>
-                    <button class="btn-sub" id="btn-mc-flat-total" style="padding: 2px 8px; font-size: 11px;">Flat ₹</button>
+                  <div class="pill-toggle-group">
+                    <button class="pill-toggle-btn active" id="btn-mc-pct">Percent (%)</button>
+                    <button class="pill-toggle-btn" id="btn-mc-flat-g">₹ / Gram</button>
+                    <button class="pill-toggle-btn" id="btn-mc-flat-total">Flat ₹</button>
                   </div>
                 </div>
 
@@ -366,7 +366,7 @@ export const GoldModule: CalculatorModule = {
 
               <!-- Section 5: Optional Hallmark Toggle -->
               <div>
-                <button id="btn-toggle-hallmark" class="btn-sub" style="width: 100%; height: 42px; border-radius: 12px; font-size: 12px; font-weight: 600;">
+                <button id="btn-toggle-hallmark" class="seg-btn" style="width: 100%; height: 42px; border-radius: 12px; font-size: 12px; font-weight: 600;">
                   + BIS Hallmark Fee (₹53.10)
                 </button>
               </div>

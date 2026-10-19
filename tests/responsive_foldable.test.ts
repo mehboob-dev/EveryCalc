@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 
-describe('Responsive Breakpoints, Foldable Support & Collapsible Sidebar', () => {
+describe('Responsive Breakpoints, Foldable Support, Keypad Ratio & Collapsible Sidebar', () => {
   const cssPath = path.resolve(__dirname, '../src/style.css');
   const css = fs.readFileSync(cssPath, 'utf8');
 
@@ -13,7 +13,7 @@ describe('Responsive Breakpoints, Foldable Support & Collapsible Sidebar', () =>
     expect(css).toContain('@media (min-width: 700px)');
   });
 
-  it('provides collapsible sidebar styling with transition effects and 0-width collapsed state', () => {
+  it('provides collapsible sidebar styling with transition effects and compact 58px icon-rail collapsed state like ChatGPT', () => {
     const desktopSection = css.slice(
       css.indexOf('@media (min-width: 700px)'),
       css.indexOf('@media (min-width: 1024px)')
@@ -21,9 +21,29 @@ describe('Responsive Breakpoints, Foldable Support & Collapsible Sidebar', () =>
 
     expect(desktopSection).toContain('.desktop-sidebar');
     expect(desktopSection).toContain('.desktop-shell.sidebar-collapsed .desktop-sidebar');
-    expect(desktopSection).toContain('width: 0 !important');
-    expect(desktopSection).toContain('opacity: 0');
-    expect(desktopSection).toContain('visibility: hidden');
+    expect(desktopSection).toContain('width: 58px !important');
+    expect(desktopSection).toContain('opacity: 1');
+    expect(desktopSection).toContain('visibility: visible');
+  });
+
+  it('defaults sidebar to collapsed icon-rail mode on initial load unless explicitly expanded', () => {
+    expect(mainTs).toContain('sidebar-collapsed');
+    expect(mainTs).toContain('everycalc-sidebar-collapsed');
+    expect(mainTs).toContain("savedState === null || savedState === 'true'");
+  });
+
+  it('allocates 60% height share to keypad grid and 40% height share to input display', () => {
+    expect(css).toContain('.calc-display');
+    expect(css).toContain('flex: 0 0 38%');
+    expect(css).toContain('.calc-keypad');
+    expect(css).toContain('grid-template-rows: repeat(5, 1fr)');
+  });
+
+  it('provides overflow-safe flexible preset pills and segmented pill toggle group', () => {
+    expect(css).toContain('.pill-toggle-group');
+    expect(css).toContain('.pill-toggle-btn');
+    expect(css).toContain('.btn-preset');
+    expect(css).toContain('min-width: max-content');
   });
 
   it('keeps #btn-menu visible on desktop / unfolded screens to serve as sidebar expand/collapse toggle', () => {
@@ -34,7 +54,6 @@ describe('Responsive Breakpoints, Foldable Support & Collapsible Sidebar', () =>
 
     expect(desktopSection).toContain('.desktop-main-area .calc-header #btn-menu');
     expect(desktopSection).toContain('display: flex !important');
-    // Mobile history button is hidden because history pane is live on desktop
     expect(desktopSection).toContain('.desktop-main-area .calc-header #btn-history');
     expect(desktopSection).toContain('display: none !important');
   });
@@ -62,8 +81,6 @@ describe('Responsive Breakpoints, Foldable Support & Collapsible Sidebar', () =>
   it('includes collapse sidebar button and toggle logic in main.ts with state persistence', () => {
     expect(mainTs).toContain('id="btn-collapse-sidebar"');
     expect(mainTs).toContain('toggleDesktopSidebar');
-    expect(mainTs).toContain('sidebar-collapsed');
-    expect(mainTs).toContain('everycalc-sidebar-collapsed');
   });
 
   it('provides expanded dimensions for widescreen monitors at min-width: 1024px', () => {
