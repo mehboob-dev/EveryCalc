@@ -198,7 +198,11 @@ function updateDisplay() {
   if (displayMain) {
     if (state.isResultDisplayed) {
       displayMain.textContent = state.formula === 'Error' ? 'Error' : formatNumber(state.formula, { section: 'general' });
+      displayMain.classList.add('is-result');
+      displayMain.classList.remove('len-compact', 'len-floor');
+      displayMain.scrollLeft = displayMain.scrollWidth;
     } else {
+      displayMain.classList.remove('is-result');
       let html = '';
       for (let i = 0; i < state.formula.length; i++) {
         if (i === state.cursorPos) {
@@ -212,23 +216,23 @@ function updateDisplay() {
         html += '<span class="calc-cursor"></span>';
       }
       displayMain.innerHTML = html;
-    }
 
-    // Dynamic font scaling: maintain large font for standard expressions, compact for > 16, floor for > 28
-    const rawLen = (displayMain.textContent || '').length;
-    displayMain.classList.remove('len-compact', 'len-floor');
-    if (rawLen > 28) {
-      displayMain.classList.add('len-floor');
-    } else if (rawLen > 16) {
-      displayMain.classList.add('len-compact');
-    }
+      // Dynamic font scaling: maintain large font for standard expressions, compact for > 16, floor for > 28
+      const rawLen = (displayMain.textContent || '').length;
+      displayMain.classList.remove('len-compact', 'len-floor');
+      if (rawLen > 28) {
+        displayMain.classList.add('len-floor');
+      } else if (rawLen > 16) {
+        displayMain.classList.add('len-compact');
+      }
 
-    // Auto-scroll vertically to keep active cursor or latest typed digits in view
-    const cursor = displayMain.querySelector('.calc-cursor') as HTMLElement;
-    if (cursor) {
-      cursor.scrollIntoView({ block: 'nearest', behavior: 'auto' });
-    } else {
-      displayMain.scrollTop = displayMain.scrollHeight;
+      // Auto-scroll vertically to keep active cursor or latest typed digits in view
+      const cursor = displayMain.querySelector('.calc-cursor') as HTMLElement;
+      if (cursor) {
+        cursor.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+      } else {
+        displayMain.scrollTop = displayMain.scrollHeight;
+      }
     }
   }
 

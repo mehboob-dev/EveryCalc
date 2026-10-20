@@ -225,6 +225,7 @@ body {
   scrollbar-width: none;
   touch-action: pan-y;
   margin-top: auto;
+  flex-shrink: 0;
 }
 
 .display-expression::-webkit-scrollbar {
@@ -256,6 +257,8 @@ body {
   touch-action: pan-y;
   transition: font-size 0.12s ease;
   overscroll-behavior: contain;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .calc-display .display-main.len-compact {
@@ -266,6 +269,23 @@ body {
 .calc-display .display-main.len-floor {
   font-size: clamp(22px, 5.8vw, 26px);
   line-height: 1.32;
+}
+
+/* Fixed size resultant when calculation is evaluated (balanced ~26-30px matching live preview) */
+.calc-display .display-main.is-result {
+  font-size: clamp(24px, 6.5vw, 30px);
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.calc-display .display-main.is-result::-webkit-scrollbar {
+  display: none;
 }
 
 .display-main::-webkit-scrollbar {
@@ -292,11 +312,13 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex-shrink: 0;
 }
 
 .display-preview {
-  font-size: clamp(13px, 3.6vw, 16px);
+  font-size: clamp(24px, 6.5vw, 30px);
   font-weight: 600;
+  line-height: 1.25;
   color: var(--accent-color);
   margin-top: 2px;
   text-align: right;
@@ -304,6 +326,8 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex-shrink: 0;
+  min-height: 32px;
 }
 
 .display-words:empty,
@@ -2951,6 +2975,12 @@ body {
   .display-main {
     font-size: clamp(24px, 5.5vh, 32px);
     min-height: 34px;
+  }
+
+  .calc-display .display-main.is-result,
+  .display-preview {
+    font-size: clamp(20px, 4.8vh, 26px);
+    min-height: 28px;
   }
 
   .calc-sub-bar {
