@@ -655,7 +655,7 @@ export const PppModule: CalculatorModule = {
 • Nominal Exchange Value: ${tgt.symbol}${formatLabelNumber(lastResult.nominalSalary)}
 
 Calculated via EveryCalc PPP Calculator
-https://mehboob-dev.github.io/EveryCalc/`;
+https://everycalc.itqantrades.com/`;
 
       shareText(text, 'PPP Living Standard Comparison');
     });
